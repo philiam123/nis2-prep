@@ -3,7 +3,9 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Award, Download, HelpCircle, Shield } from "lucide-react";
+import { Award, Download, Shield, QrCode, ExternalLink, Copy, Check } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { useState } from "react";
 
 interface CertificateData {
   id: number;
@@ -26,6 +28,18 @@ export default function CertificatePage() {
     ? certificates.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime())[0]
     : null;
 
+  const VERIFY_BASE = "https://nis2utbildning.com/#/verify";
+  const verifyUrl = latestCert ? `${VERIFY_BASE}/${latestCert.certificateId}` : "";
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    if (verifyUrl) {
+      navigator.clipboard.writeText(verifyUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow || !latestCert) return;
@@ -40,6 +54,7 @@ export default function CertificatePage() {
 <html>
 <head>
   <title>NIS2 Certifikat — ${user?.name}</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"><\/script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -66,8 +81,12 @@ export default function CertificatePage() {
     .detail { text-align: center; }
     .detail-value { font-size: 18px; font-weight: 600; color: #00D4FF; }
     .detail-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
-    .footer { text-align: center; margin-top: 40px; color: rgba(255,255,255,0.3); font-size: 11px; }
+    .footer { text-align: center; margin-top: 40px; color: rgba(255,255,255,0.3); font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 32px; }
+    .footer-text { text-align: center; }
     .cert-id { font-family: monospace; color: rgba(255,255,255,0.2); }
+    .qr-section { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .qr-section canvas { border-radius: 8px; }
+    .qr-label { font-size: 9px; color: rgba(255,255,255,0.3); }
     @media print { body { background: white; } .certificate { width: 100%; border-color: #0066FF; } }
   </style>
 </head>
@@ -103,11 +122,28 @@ export default function CertificatePage() {
       </div>
     </div>
     <div class="footer">
-      <p>© 2026 Electrab AB</p>
-      <p class="cert-id" style="margin-top: 8px;">Certifikat-ID: ${latestCert.certificateId}</p>
+      <div class="footer-text">
+        <p>© 2026 Electrab AB</p>
+        <p class="cert-id" style="margin-top: 8px;">Certifikat-ID: ${latestCert.certificateId}</p>
+        <p class="cert-id" style="margin-top: 4px;">Verifiera: nis2utbildning.com/#/verify/${latestCert.certificateId}</p>
+      </div>
+      <div class="qr-section">
+        <canvas id="qr-code"></canvas>
+        <span class="qr-label">Skanna för att verifiera</span>
+      </div>
     </div>
   </div>
-  <script>window.onload = function() { window.print(); }</script>
+  <script>
+    window.onload = function() {
+      QRCode.toCanvas(document.getElementById('qr-code'), '${verifyUrl}', {
+        width: 80,
+        margin: 1,
+        color: { dark: '#00D4FF', light: 'transparent' }
+      }, function() {
+        setTimeout(function() { window.print(); }, 300);
+      });
+    };
+  <\/script>
 </body>
 </html>
     `);
@@ -193,9 +229,23 @@ export default function CertificatePage() {
             </div>
           </div>
 
-          <div className="mt-6 text-white/20 text-xs">
-            <p>© 2026 Electrab AB</p>
-            <p className="font-mono mt-1">Certifikat-ID: {latestCert.certificateId}</p>
+          <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-center gap-6">
+            <div className="text-center">
+              <p className="text-white/20 text-xs">© 2026 Electrab AB</p>
+              <p className="font-mono mt-1 text-white/20 text-xs">Certifikat-ID: {latestCert.certificateId}</p>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <QRCodeSVG
+                  value={verifyUrl}
+                  size={64}
+                  bgColor="transparent"
+                  fgColor="#22d3ee"
+                  level="M"
+                />
+              </div>
+              <span className="text-[9px] text-white/30">Skanna för att verifiera</span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -205,6 +255,10 @@ export default function CertificatePage() {
         <Button onClick={handlePrint} data-testid="certificate-download">
           <Download className="mr-2 h-4 w-4" />
           Ladda ner / Skriv ut
+        </Button>
+        <Button variant="outline" onClick={handleCopyLink}>
+          {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+          {copied ? "Kopierad!" : "Kopiera verifieringslänk"}
         </Button>
         <Button variant="outline" onClick={() => navigate("/dashboard")}>
           Tillbaka till dashboard
@@ -239,6 +293,16 @@ export default function CertificatePage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Utbildning</span>
               <span className="font-medium">NIS2 Cybersäkerhetsutbildning</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Verifiering</span>
+              <a
+                href={`/#/verify/${latestCert.certificateId}`}
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                Verifiera certifikat
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
         </CardContent>

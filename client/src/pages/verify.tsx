@@ -114,7 +114,7 @@ function VerifyResult({ certId }: { certId: string }) {
             <div className="pt-4 border-t space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Utfärdare</p>
               <p className="font-medium">Electrab AB</p>
-              <p className="text-sm text-muted-foreground">via NIS2 Prep — nis2utbildning.se</p>
+              <p className="text-sm text-muted-foreground">via NIS2 Prep — nis2utbildning.com</p>
             </div>
           </div>
         </CardContent>
@@ -190,7 +190,7 @@ export default function VerifyPage() {
 
       {/* Footer */}
       <footer className="border-t mt-16 py-6 text-center text-xs text-muted-foreground">
-        <p>© 2026 Electrab AB — nis2utbildning.se</p>
+        <p>© 2026 Electrab AB — nis2utbildning.com</p>
       </footer>
     </div>
   );

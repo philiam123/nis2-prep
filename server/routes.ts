@@ -11,7 +11,7 @@ import { loginSchema, registerSchema, insertStudyProgressSchema, insertQuizResul
 import type { User } from "../shared/schema";
 
 // Stripe setup
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_REPLACE_WITH_YOUR_STRIPE_SECRET_KEY", {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2025-04-30.basil",
 });
 
@@ -186,99 +186,82 @@ export async function registerRoutes(server: Server, app: Express) {
   app.post("/api/payment/verify", requireAuth, async (req, res) => {
     try {
       const { sessionId } = req.body;
-      if (!sessionId) return res.status(400).json({ message: "Missing session ID" });
+      if (!sessionId) return res.status(400).json({ message: "Session ID required" });
 
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
       
-      if (session.payment_status === "paid") {
-        const user = req.user as User;
-        const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id || null;
-        await storage.updateUserPayment(user.id, true, customerId || `stripe_${session.id}`);
-        
-        const updated = await storage.getUser(user.id);
-        if (updated) {
-          req.login(updated, (err) => {
-            if (err) return res.status(500).json({ message: "Session update failed" });
-            const { password, ...safeUser } = updated;
-            res.json({ success: true, user: safeUser });
-          });
-          return;
-        }
+      if (checkoutSession.payment_status === "paid" && 
+          checkoutSession.client_reference_id === String((req.user as User).id)) {
+        const updatedUser = await storage.updateUserPayment((req.user as User).id, true);
+        req.login(updatedUser!, (err) => {
+          if (err) return res.status(500).json({ message: "Session update failed" });
+          const { password, ...safeUser } = updatedUser!;
+          res.json({ success: true, user: safeUser });
+        });
+      } else {
+        res.status(400).json({ message: "Payment not completed" });
       }
-
-      res.status(400).json({ message: "Payment not completed" });
     } catch (err: any) {
       console.error("Payment verify error:", err.message);
       res.status(500).json({ message: "Failed to verify payment" });
     }
   });
 
-  app.post("/api/stripe/webhook", async (req, res) => {
-    const sig = req.headers['stripe-signature'];
+  app.post("/api/payment/webhook", async (req, res) => {
+    const sig = req.headers["stripe-signature"];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!sig || !webhookSecret) {
+      return res.status(400).json({ message: "Missing signature or webhook secret" });
+    }
 
     try {
-      let event: Stripe.Event;
+      const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
       
-      if (webhookSecret && sig) {
-        event = stripe.webhooks.constructEvent((req as any).rawBody, sig, webhookSecret);
-      } else {
-        event = req.body as Stripe.Event;
-      }
-
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.client_reference_id;
-        
-        if (userId) {
-          const customerId = typeof session.customer === 'string' ? session.customer : null;
-          await storage.updateUserPayment(parseInt(userId), true, customerId || `stripe_${session.id}`);
-          console.log(`Payment confirmed for user ${userId}`);
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as any;
+        if (session.payment_status === "paid" && session.client_reference_id) {
+          const userId = parseInt(session.client_reference_id);
+          await storage.updateUserPayment(userId, true);
         }
       }
-
+      
       res.json({ received: true });
     } catch (err: any) {
-      console.error('Webhook error:', err.message);
-      res.status(400).json({ message: `Webhook error: ${err.message}` });
+      console.error("Webhook error:", err.message);
+      res.status(400).json({ message: "Webhook error" });
     }
   });
 
-  // ── Study Progress Routes ────────────────────────
-  app.get("/api/progress", requireAuth, async (req, res) => {
-    const user = req.user as User;
-    const progress = await storage.getStudyProgress(user.id);
+  // ── Study Progress Routes ─────────────────────────
+  app.get("/api/progress", requirePaid, async (req, res) => {
+    const userId = (req.user as User).id;
+    const progress = await storage.getStudyProgress(userId);
     res.json(progress);
   });
 
-  app.post("/api/progress", requireAuth, async (req, res) => {
+  app.post("/api/progress", requirePaid, async (req, res) => {
     try {
-      const user = req.user as User;
-      const data = insertStudyProgressSchema.parse({
-        ...req.body,
-        userId: user.id,
-      });
-      const result = await storage.upsertStudyProgress(data);
-      res.json(result);
+      const userId = (req.user as User).id;
+      const data = insertStudyProgressSchema.parse({ ...req.body, userId });
+      const progress = await storage.upsertStudyProgress(data);
+      res.json(progress);
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Invalid input" });
     }
   });
 
-  // ── Quiz Routes ──────────────────────────────────
-  app.get("/api/quiz-results", requireAuth, async (req, res) => {
-    const user = req.user as User;
-    const results = await storage.getQuizResults(user.id);
+  // ── Quiz Results Routes ────────────────────────────
+  app.get("/api/quiz-results", requirePaid, async (req, res) => {
+    const userId = (req.user as User).id;
+    const results = await storage.getQuizResults(userId);
     res.json(results);
   });
 
-  app.post("/api/quiz-results", requireAuth, async (req, res) => {
+  app.post("/api/quiz-results", requirePaid, async (req, res) => {
     try {
-      const user = req.user as User;
-      const data = insertQuizResultSchema.parse({
-        ...req.body,
-        userId: user.id,
-      });
+      const userId = (req.user as User).id;
+      const data = insertQuizResultSchema.parse({ ...req.body, userId });
       const result = await storage.createQuizResult(data);
       res.json(result);
     } catch (err: any) {
@@ -286,100 +269,72 @@ export async function registerRoutes(server: Server, app: Express) {
     }
   });
 
-  // ── Certificate Routes ──────────────────────────
+  // ── Certificate Routes ─────────────────────────────
   app.get("/api/certificates", requireAuth, async (req, res) => {
-    const user = req.user as User;
-    const certs = await storage.getCertificates(user.id);
+    const userId = (req.user as User).id;
+    const certs = await storage.getCertificates(userId);
     res.json(certs);
   });
 
-  app.post("/api/certificates", requireAuth, async (req, res) => {
+  app.post("/api/certificates", requirePaid, async (req, res) => {
     try {
-      const user = req.user as User;
+      const userId = (req.user as User).id;
       const { examScore, totalQuestions } = req.body;
-      
-      if (!examScore || !totalQuestions) {
-        return res.status(400).json({ message: "Missing exam score or total questions" });
+
+      if (typeof examScore !== "number" || typeof totalQuestions !== "number") {
+        return res.status(400).json({ message: "Invalid score data" });
       }
 
-      const scorePercent = Math.round((examScore / totalQuestions) * 100);
+      const scorePercent = (examScore / totalQuestions) * 100;
       if (scorePercent < 70) {
-        return res.status(400).json({ message: "Score below passing threshold (70%)" });
+        return res.status(400).json({ message: "Score too low for certificate (minimum 70%)" });
       }
 
+      const certificateId = randomUUID();
       const cert = await storage.createCertificate({
-        userId: user.id,
-        certificateId: randomUUID(),
+        userId,
+        certificateId,
         examScore,
         totalQuestions,
       });
+
       res.json(cert);
     } catch (err: any) {
-      res.status(400).json({ message: err.message || "Failed to create certificate" });
+      res.status(400).json({ message: err.message || "Invalid input" });
     }
   });
 
-  app.get("/api/certificates/:id", async (req, res) => {
+  // Public certificate verification
+  app.get("/api/certificates/:certId", async (req, res) => {
     try {
-      const cert = await storage.getCertificateById(req.params.id);
+      const cert = await storage.getCertificateById(req.params.certId);
       if (!cert) return res.status(404).json({ message: "Certificate not found" });
       res.json(cert);
     } catch (err: any) {
-      res.status(500).json({ message: "Failed to retrieve certificate" });
+      res.status(500).json({ message: "Server error" });
     }
   });
 
-  // ── Admin Routes ────────────────────────────────
+  // ── Admin Routes ──────────────────────────────────────
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
-    const allUsers = await storage.getAllUsers();
-    const users = allUsers.map(u => {
-      const { password, ...safe } = u;
-      return safe;
-    });
-    res.json(users);
+    const users = await storage.getAllUsers();
+    const safeUsers = users.map(({ password, ...u }) => u);
+    res.json(safeUsers);
   });
 
-  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
-    const allUsers = await storage.getAllUsers();
-    const nonAdminUsers = allUsers.filter(u => !u.isAdmin);
-    const paidUsers = nonAdminUsers.filter(u => u.hasPaid);
-    const totalRevenue = paidUsers.length * 1490;
-
-    let totalQuizzes = 0;
-    let totalCorrect = 0;
-    let totalQuestions = 0;
-    for (const user of nonAdminUsers) {
-      const results = await storage.getQuizResults(user.id);
-      totalQuizzes += results.length;
-      for (const r of results) {
-        totalCorrect += r.correctAnswers;
-        totalQuestions += r.totalQuestions;
-      }
+  app.patch("/api/admin/users/:id/payment", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { hasPaid } = req.body;
+      if (typeof hasPaid !== "boolean") return res.status(400).json({ message: "hasPaid must be boolean" });
+      const user = await storage.updateUserPayment(userId, hasPaid);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Invalid input" });
     }
-
-    let totalChaptersCompleted = 0;
-    for (const user of nonAdminUsers) {
-      const progress = await storage.getStudyProgress(user.id);
-      totalChaptersCompleted += progress.filter(p => p.completed).length;
-    }
-
-    res.json({
-      totalUsers: nonAdminUsers.length,
-      paidUsers: paidUsers.length,
-      totalRevenue,
-      totalQuizzes,
-      avgScore: totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0,
-      totalChaptersCompleted,
-    });
   });
 
-  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
-    const userId = parseInt(req.params.id);
-    const user = await storage.getUser(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.isAdmin) return res.status(400).json({ message: "Cannot delete admin" });
-    res.json({ message: "User deleted", userId });
-  });
-
-  return server;
+  return createServer(app);
 }
