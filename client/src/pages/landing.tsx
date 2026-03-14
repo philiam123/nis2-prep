@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, Users, Clock, Award, AlertTriangle, BookOpen, HelpCircle, CheckCircle, Zap, Lock, FileText, ArrowRight } from "lucide-react";
+import { Shield, Users, Clock, Award, AlertTriangle, BookOpen, HelpCircle, CheckCircle, Zap, Lock, FileText, ArrowRight, Building2, Mail } from "lucide-react";
 
 export default function LandingPage() {
   const [, navigate] = useLocation();
@@ -262,45 +262,98 @@ export default function LandingPage() {
 
       {/* Pricing */}
       <section className="py-20 px-4 bg-white/[0.02] border-y border-white/10">
-        <div className="max-w-md mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8">Enkel prissättning</h2>
-          <Card className="bg-white/[0.03] border-cyan-500/30">
-            <CardContent className="pt-8 pb-8">
-              <div className="text-5xl font-bold mb-1">
-                <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">1 490 kr</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {/* Individ */}
+            <Card className="bg-white/[0.03] border-cyan-500/30">
+              <CardContent className="pt-8 pb-8">
+                <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4">Individ</div>
+                <div className="text-5xl font-bold mb-1">
+                  <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">1 490 kr</span>
+                </div>
+                <div className="text-white/50 mb-8">Per person. Engångsbetalning.</div>
+                <ul className="text-left mb-8 space-y-3 max-w-xs mx-auto">
+                  {[
+                    "13 utbildningsmoduler",
+                    "100+ quizfrågor med förklaringar",
+                    "Slutprov med certifikat",
+                    "Anpassat för energisektorn",
+                    "Uppfyller Cybersäkerhetslagens krav",
+                    "Obegränsad tillgång",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
+                      <span className="text-sm text-white/70">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border-0"
+                  data-testid="pricing-get-started-btn"
+                  onClick={() => navigate("/register")}
+                >
+                  Starta utbildningen
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Företag */}
+            <Card className="border-white/20 bg-white/5 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  Populärt
+                </span>
               </div>
-              <div className="text-white/50 mb-8">Per person. Engångsbetalning.</div>
-              <ul className="text-left mb-8 space-y-3 max-w-xs mx-auto">
-                {[
-                  "13 utbildningsmoduler",
-                  "100+ quizfrågor med förklaringar",
-                  "Slutprov med certifikat",
-                  "Anpassat för energisektorn",
-                  "Uppfyller Cybersäkerhetslagens krav",
-                  "Obegränsad tillgång",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
-                    <span className="text-sm text-white/70">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                size="lg"
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border-0"
-                data-testid="pricing-get-started-btn"
-                onClick={() => navigate("/register")}
-              >
-                Starta utbildningen
-              </Button>
-            </CardContent>
-          </Card>
+              <CardContent className="pt-8 pb-8">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Building2 className="h-4 w-4 text-cyan-400" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Företag</span>
+                </div>
+                <div className="text-3xl font-bold mb-1 text-white">Kontakta oss</div>
+                <div className="text-white/50 mb-8">Anpassat pris för er organisation.</div>
+                <ul className="text-left mb-8 space-y-3 max-w-xs mx-auto">
+                  {[
+                    "Anpassat pris vid 5+ licenser",
+                    "Samlad faktura",
+                    "Uppföljning av kursframsteg",
+                    "Dedikerad support",
+                    "Skräddarsydda moduler",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
+                      <span className="text-sm text-white/70">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-white/20 text-white hover:bg-white/10"
+                  asChild
+                >
+                  <a href="mailto:philip.nilsson@electrab.se?subject=NIS2%20F%C3%B6retagslicens">
+                    <Mail className="mr-2 h-4 w-4" />
+                    Kontakta oss
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-white/10">
-        <div className="max-w-5xl mx-auto text-center space-y-2">
+        <div className="max-w-5xl mx-auto text-center space-y-3">
+          <div className="flex items-center justify-center gap-4">
+            <a href="#/privacy" className="text-xs text-white/40 hover:text-white/70 transition-colors">Integritetspolicy</a>
+            <span className="text-white/20">·</span>
+            <a href="#/cookies" className="text-xs text-white/40 hover:text-white/70 transition-colors">Cookiepolicy</a>
+            <span className="text-white/20">·</span>
+            <a href="mailto:philip.nilsson@electrab.se" className="text-xs text-white/40 hover:text-white/70 transition-colors">Kontakt</a>
+          </div>
           <p className="text-xs text-white/30">
             © 2026 Electrab AB. NIS2 Prep är en utbildningsplattform för cybersäkerhet baserad på EU:s NIS2-direktiv (2022/2555) och
             den svenska Cybersäkerhetslagen (2025:1506). Utbildningen ersätter inte juridisk rådgivning.

@@ -9,6 +9,7 @@ import { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { loginSchema, registerSchema, insertStudyProgressSchema, insertQuizResultSchema } from "../shared/schema";
 import type { User } from "../shared/schema";
+import { sendWelcomeEmail, sendPaymentConfirmation, sendCertificateEmail } from './email';
 
 // Stripe setup
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
@@ -91,7 +92,7 @@ export async function registerRoutes(server: Server, app: Express) {
     }
   });
 
-  // ── Auth Routes ──────────────────────────────────
+  // ── Auth Routes ────────────────────────────────────────────
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = registerSchema.parse(req.body);
@@ -106,6 +107,7 @@ export async function registerRoutes(server: Server, app: Express) {
 
       req.login(user, (err) => {
         if (err) return res.status(500).json({ message: "Login failed after registration" });
+        sendWelcomeEmail(user.email, user.name);
         const { password, ...safeUser } = user;
         res.json(safeUser);
       });
@@ -145,7 +147,7 @@ export async function registerRoutes(server: Server, app: Express) {
     res.json(safeUser);
   });
 
-  // ── Payment Routes (Stripe Checkout) ─────────────
+  // ── Payment Routes (Stripe Checkout) ─────────────────────────────
   app.post("/api/payment/create-checkout", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
@@ -186,82 +188,100 @@ export async function registerRoutes(server: Server, app: Express) {
   app.post("/api/payment/verify", requireAuth, async (req, res) => {
     try {
       const { sessionId } = req.body;
-      if (!sessionId) return res.status(400).json({ message: "Session ID required" });
+      if (!sessionId) return res.status(400).json({ message: "Missing session ID" });
 
-      const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
       
-      if (checkoutSession.payment_status === "paid" && 
-          checkoutSession.client_reference_id === String((req.user as User).id)) {
-        const updatedUser = await storage.updateUserPayment((req.user as User).id, true);
-        req.login(updatedUser!, (err) => {
-          if (err) return res.status(500).json({ message: "Session update failed" });
-          const { password, ...safeUser } = updatedUser!;
-          res.json({ success: true, user: safeUser });
-        });
-      } else {
-        res.status(400).json({ message: "Payment not completed" });
+      if (session.payment_status === "paid") {
+        const user = req.user as User;
+        const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id || null;
+        await storage.updateUserPayment(user.id, true, customerId || `stripe_${session.id}`);
+        sendPaymentConfirmation(user.email, user.name);
+        
+        const updated = await storage.getUser(user.id);
+        if (updated) {
+          req.login(updated, (err) => {
+            if (err) return res.status(500).json({ message: "Session update failed" });
+            const { password, ...safeUser } = updated;
+            res.json({ success: true, user: safeUser });
+          });
+          return;
+        }
       }
+
+      res.status(400).json({ message: "Payment not completed" });
     } catch (err: any) {
       console.error("Payment verify error:", err.message);
       res.status(500).json({ message: "Failed to verify payment" });
     }
   });
 
-  app.post("/api/payment/webhook", async (req, res) => {
-    const sig = req.headers["stripe-signature"];
+  app.post("/api/stripe/webhook", async (req, res) => {
+    const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    if (!sig || !webhookSecret) {
-      return res.status(400).json({ message: "Missing signature or webhook secret" });
-    }
 
     try {
-      const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      let event: Stripe.Event;
       
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object as any;
-        if (session.payment_status === "paid" && session.client_reference_id) {
-          const userId = parseInt(session.client_reference_id);
-          await storage.updateUserPayment(userId, true);
+      if (webhookSecret && sig) {
+        event = stripe.webhooks.constructEvent((req as any).rawBody, sig, webhookSecret);
+      } else {
+        event = req.body as Stripe.Event;
+      }
+
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.client_reference_id;
+        
+        if (userId) {
+          const customerId = typeof session.customer === 'string' ? session.customer : null;
+          await storage.updateUserPayment(parseInt(userId), true, customerId || `stripe_${session.id}`);
+          console.log(`Payment confirmed for user ${userId}`);
         }
       }
-      
+
       res.json({ received: true });
     } catch (err: any) {
-      console.error("Webhook error:", err.message);
-      res.status(400).json({ message: "Webhook error" });
+      console.error('Webhook error:', err.message);
+      res.status(400).json({ message: `Webhook error: ${err.message}` });
     }
   });
 
-  // ── Study Progress Routes ─────────────────────────
-  app.get("/api/progress", requirePaid, async (req, res) => {
-    const userId = (req.user as User).id;
-    const progress = await storage.getStudyProgress(userId);
+  // ── Study Progress Routes ────────────────────────────────────────────
+  app.get("/api/progress", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const progress = await storage.getStudyProgress(user.id);
     res.json(progress);
   });
 
-  app.post("/api/progress", requirePaid, async (req, res) => {
+  app.post("/api/progress", requireAuth, async (req, res) => {
     try {
-      const userId = (req.user as User).id;
-      const data = insertStudyProgressSchema.parse({ ...req.body, userId });
-      const progress = await storage.upsertStudyProgress(data);
-      res.json(progress);
+      const user = req.user as User;
+      const data = insertStudyProgressSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
+      const result = await storage.upsertStudyProgress(data);
+      res.json(result);
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Invalid input" });
     }
   });
 
-  // ── Quiz Results Routes ────────────────────────────
-  app.get("/api/quiz-results", requirePaid, async (req, res) => {
-    const userId = (req.user as User).id;
-    const results = await storage.getQuizResults(userId);
+  // ── Quiz Routes ──────────────────────────────────────────────────
+  app.get("/api/quiz-results", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const results = await storage.getQuizResults(user.id);
     res.json(results);
   });
 
-  app.post("/api/quiz-results", requirePaid, async (req, res) => {
+  app.post("/api/quiz-results", requireAuth, async (req, res) => {
     try {
-      const userId = (req.user as User).id;
-      const data = insertQuizResultSchema.parse({ ...req.body, userId });
+      const user = req.user as User;
+      const data = insertQuizResultSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
       const result = await storage.createQuizResult(data);
       res.json(result);
     } catch (err: any) {
@@ -269,72 +289,124 @@ export async function registerRoutes(server: Server, app: Express) {
     }
   });
 
-  // ── Certificate Routes ─────────────────────────────
+  // ── Certificate Routes ──────────────────────────────────────────────
   app.get("/api/certificates", requireAuth, async (req, res) => {
-    const userId = (req.user as User).id;
-    const certs = await storage.getCertificates(userId);
+    const user = req.user as User;
+    const certs = await storage.getCertificates(user.id);
     res.json(certs);
   });
 
-  app.post("/api/certificates", requirePaid, async (req, res) => {
+  app.post("/api/certificates", requireAuth, async (req, res) => {
     try {
-      const userId = (req.user as User).id;
+      const user = req.user as User;
       const { examScore, totalQuestions } = req.body;
-
-      if (typeof examScore !== "number" || typeof totalQuestions !== "number") {
-        return res.status(400).json({ message: "Invalid score data" });
+      
+      if (!examScore || !totalQuestions) {
+        return res.status(400).json({ message: "Missing exam score or total questions" });
       }
 
-      const scorePercent = (examScore / totalQuestions) * 100;
+      const scorePercent = Math.round((examScore / totalQuestions) * 100);
       if (scorePercent < 70) {
-        return res.status(400).json({ message: "Score too low for certificate (minimum 70%)" });
+        return res.status(400).json({ message: "Score below passing threshold (70%)" });
       }
 
-      const certificateId = randomUUID();
       const cert = await storage.createCertificate({
-        userId,
-        certificateId,
+        userId: user.id,
+        certificateId: randomUUID(),
         examScore,
         totalQuestions,
       });
-
+      sendCertificateEmail((req.user as User).email, (req.user as User).name, cert.certificateId, cert.examScore, cert.totalQuestions);
       res.json(cert);
     } catch (err: any) {
-      res.status(400).json({ message: err.message || "Invalid input" });
+      res.status(400).json({ message: err.message || "Failed to create certificate" });
     }
   });
 
-  // Public certificate verification
-  app.get("/api/certificates/:certId", async (req, res) => {
+  app.get("/api/certificates/:id", async (req, res) => {
     try {
-      const cert = await storage.getCertificateById(req.params.certId);
+      const cert = await storage.getCertificateById(req.params.id);
       if (!cert) return res.status(404).json({ message: "Certificate not found" });
-      res.json(cert);
+      // Include user name for public verification
+      const user = await storage.getUser(cert.userId);
+      res.json({
+        ...cert,
+        userName: user?.name || "Okänd",
+        userEmail: user?.email || "",
+      });
     } catch (err: any) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to retrieve certificate" });
     }
   });
 
-  // ── Admin Routes ──────────────────────────────────────
+  // ── Admin Routes ────────────────────────────────────────────────
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
-    const users = await storage.getAllUsers();
-    const safeUsers = users.map(({ password, ...u }) => u);
-    res.json(safeUsers);
+    const allUsers = await storage.getAllUsers();
+    const users = allUsers.map(u => {
+      const { password, ...safe } = u;
+      return safe;
+    });
+    res.json(users);
   });
 
-  app.patch("/api/admin/users/:id/payment", requireAdmin, async (req, res) => {
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    const allUsers = await storage.getAllUsers();
+    const nonAdminUsers = allUsers.filter(u => !u.isAdmin);
+    const paidUsers = nonAdminUsers.filter(u => u.hasPaid);
+    const totalRevenue = paidUsers.length * 1490;
+
+    let totalQuizzes = 0;
+    let totalCorrect = 0;
+    let totalQuestions = 0;
+    for (const user of nonAdminUsers) {
+      const results = await storage.getQuizResults(user.id);
+      totalQuizzes += results.length;
+      for (const r of results) {
+        totalCorrect += r.correctAnswers;
+        totalQuestions += r.totalQuestions;
+      }
+    }
+
+    let totalChaptersCompleted = 0;
+    for (const user of nonAdminUsers) {
+      const progress = await storage.getStudyProgress(user.id);
+      totalChaptersCompleted += progress.filter(p => p.completed).length;
+    }
+
+    res.json({
+      totalUsers: nonAdminUsers.length,
+      paidUsers: paidUsers.length,
+      totalRevenue,
+      totalQuizzes,
+      avgScore: totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0,
+      totalChaptersCompleted,
+    });
+  });
+
+  app.get("/api/admin/certificates", requireAdmin, async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
-      const { hasPaid } = req.body;
-      if (typeof hasPaid !== "boolean") return res.status(400).json({ message: "hasPaid must be boolean" });
-      const user = await storage.updateUserPayment(userId, hasPaid);
-      if (!user) return res.status(404).json({ message: "User not found" });
-      const { password, ...safeUser } = user;
-      res.json(safeUser);
+      const allUsers = await storage.getAllUsers();
+      const allCerts: any[] = [];
+      for (const user of allUsers) {
+        const certs = await storage.getCertificates(user.id);
+        for (const cert of certs) {
+          const { password, ...safeUser } = user;
+          allCerts.push({ ...cert, userName: user.name, userEmail: user.email });
+        }
+      }
+      res.json(allCerts);
     } catch (err: any) {
-      res.status(400).json({ message: err.message || "Invalid input" });
+      res.status(500).json({ message: "Failed to retrieve certificates" });
     }
   });
 
-  return createServer(app);
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    const userId = parseInt(req.params.id);
+    const user = await storage.getUser(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.isAdmin) return res.status(400).json({ message: "Cannot delete admin" });
+    res.json({ message: "User deleted", userId });
+  });
+
+  return server;
 }
