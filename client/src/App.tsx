@@ -20,6 +20,8 @@ import CertificatePage from "@/pages/certificate";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
 import VerifyPage from "@/pages/verify";
+import PrivacyPage from "@/pages/privacy";
+import CookiesPage from "@/pages/cookies";
 
 function LoadingScreen() {
   return (
@@ -130,6 +132,8 @@ function AppRouter() {
       </Route>
       <Route path="/verify/:certId" component={VerifyPage} />
       <Route path="/verify" component={VerifyPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/cookies" component={CookiesPage} />
       <Route component={NotFound} />
     </Switch>
   );
