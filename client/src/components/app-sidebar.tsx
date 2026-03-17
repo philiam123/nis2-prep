@@ -14,7 +14,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Shield, LayoutDashboard, BookOpen, HelpCircle, Award, GraduationCap, Moon, Sun, LogOut, ShieldCheck, Settings } from "lucide-react";
+import { Shield, LayoutDashboard, BookOpen, HelpCircle, Award, GraduationCap, Moon, Sun, LogOut, ShieldCheck, Settings, Mail } from "lucide-react";
 
 
 export function AppSidebar() {
@@ -71,6 +71,15 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => window.location.href = "mailto:philip.nilsson@electrab.se"}
+                  data-testid="sidebar-nav-kontakt"
+                >
+                  <Mail className="h-4 w-4" />
+                  <span>Kontakta oss</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
