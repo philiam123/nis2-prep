@@ -78,7 +78,7 @@ export default function StudyPage() {
               {domain.chapters.map((ch) => (
                 <button
                   key={ch.id}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-accent ${
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent ${
                     selectedChapter === ch.id ? "bg-accent font-medium" : ""
                   }`}
                   onClick={() => selectChapter(ch.id)}
@@ -133,7 +133,7 @@ export default function StudyPage() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-          <div className="p-4 md:p-6 max-w-3xl w-full">
+          <div className="p-4 md:p-6 max-w-4xl w-full">
             {currentChapter ? (
               <>
                 <div className="flex items-start justify-between mb-6">
@@ -144,6 +144,9 @@ export default function StudyPage() {
                     <h1 className="text-xl font-bold" data-testid="study-chapter-title">
                       {currentChapter.chapter.title}
                     </h1>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {currentChapter.domain.chapters.filter(c => completedSet.has(c.id)).length} av {currentChapter.domain.chapters.length} moduler avklarade i detta spår
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     <Checkbox

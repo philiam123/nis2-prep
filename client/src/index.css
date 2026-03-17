@@ -222,35 +222,58 @@
 
 /* ── Study Content Styles ── */
 .study-content .concept-block {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
-  background: hsl(var(--card));
+  @apply bg-card border border-border rounded-xl p-6 mb-6;
 }
 
 .study-content .concept-block h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: hsl(var(--foreground));
+  @apply text-base font-semibold mb-3 text-foreground;
+}
+
+.study-content .concept-block p {
+  @apply text-sm leading-relaxed text-muted-foreground mb-3;
 }
 
 .study-content .concept-block ul {
-  list-style: disc;
-  padding-left: 1.25rem;
-  margin: 0.5rem 0;
+  @apply space-y-2 ml-0 list-none;
 }
 
-.study-content .concept-block li {
-  margin-bottom: 0.25rem;
-  line-height: 1.6;
+.study-content .concept-block ul li {
+  @apply text-sm leading-relaxed text-muted-foreground pl-4 relative;
+}
+
+.study-content .concept-block ul li::before {
+  content: '';
+  @apply absolute left-0 top-[0.6em] w-1.5 h-1.5 rounded-full bg-primary;
+}
+
+.study-content .concept-block ul li strong {
+  @apply text-foreground;
 }
 
 .study-content {
   overflow-x: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+.study-content .tip-block {
+  @apply border-l-4 border-primary bg-primary/5 p-4 rounded-r-lg my-6;
+}
+
+.study-content .tip-block p {
+  @apply text-sm leading-relaxed;
+}
+
+.study-content table {
+  @apply w-full text-sm border-collapse my-4;
+}
+
+.study-content th {
+  @apply text-left font-semibold p-3 bg-muted/50 border-b border-border;
+}
+
+.study-content td {
+  @apply p-3 border-b border-border/50;
 }
 
 .study-content .study-table-wrapper {

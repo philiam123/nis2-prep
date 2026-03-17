@@ -7,7 +7,7 @@ import { allQuestions } from "@/data/questions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, HelpCircle, ArrowRight, Target, Award, Shield, Users } from "lucide-react";
+import { BookOpen, HelpCircle, ArrowRight, Target, Award, GraduationCap, Shield, Users } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -73,7 +73,7 @@ export default function DashboardPage() {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl">
       {/* Welcome */}
-      <div>
+      <div className="rounded-xl bg-gradient-to-r from-primary/5 via-primary/10 to-transparent p-6 -mx-2">
         <h1 className="text-2xl font-bold" data-testid="dashboard-welcome">
           Välkommen, {user?.name || "Deltagare"}
         </h1>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
             <Button
               variant={hasCertificate ? "default" : "outline"}
               size="sm"
-              onClick={() => navigate(hasCertificate ? "/certificate" : "/quiz")}
+              onClick={() => navigate(hasCertificate ? "/certificate" : "/exam")}
             >
               {hasCertificate ? "Visa certifikat" : "Påbörja slutprov"}
             </Button>
@@ -121,9 +121,15 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6 mb-4">
-            <div className="text-center">
-              <div className={`text-4xl font-bold ${examReadiness.isReady ? "text-green-600" : "text-primary"}`}>
-                {examReadiness.overall}%
+            <div className="text-center shrink-0">
+              <div className="relative inline-flex items-center justify-center w-20 h-20">
+                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                  <circle cx="40" cy="40" r="34" fill="none" stroke={examReadiness.isReady ? "#16a34a" : "hsl(var(--primary))"} strokeWidth="6" strokeLinecap="round" strokeDasharray={`${examReadiness.overall * 2.136} 213.6`} />
+                </svg>
+                <span className={`absolute text-lg font-bold ${examReadiness.isReady ? "text-green-600" : "text-primary"}`}>
+                  {examReadiness.overall}%
+                </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {examReadiness.isReady ? "Redo för slutprov" : "Fortsätt studera"}
@@ -172,7 +178,7 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold mb-3">Spårframgång</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {trackProgress.map((d) => (
-            <Card key={d.id} data-testid={`domain-card-${d.id}`}>
+            <Card key={d.id} data-testid={`domain-card-${d.id}`} className="border-l-4" style={{ borderLeftColor: d.color }}>
               <CardContent className="pt-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -208,9 +214,9 @@ export default function DashboardPage() {
           <HelpCircle className="mr-2 h-4 w-4" />
           Gör quiz
         </Button>
-        <Button variant="outline" onClick={() => navigate("/certificate")}>
-          <Award className="mr-2 h-4 w-4" />
-          Certifikat
+        <Button variant="outline" data-testid="dashboard-take-exam" onClick={() => navigate("/exam")}>
+          <GraduationCap className="mr-2 h-4 w-4" />
+          Slutprov
         </Button>
       </div>
 

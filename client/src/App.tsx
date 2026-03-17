@@ -16,6 +16,7 @@ import PaymentSuccessPage from "@/pages/payment-success";
 import DashboardPage from "@/pages/dashboard";
 import StudyPage from "@/pages/study";
 import QuizPage from "@/pages/quiz";
+import ExamPage from "@/pages/exam";
 import CertificatePage from "@/pages/certificate";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
@@ -115,6 +116,13 @@ function AppRouter() {
         <ProtectedRoute>
           <AuthenticatedLayout>
             <QuizPage />
+          </AuthenticatedLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/exam">
+        <ProtectedRoute>
+          <AuthenticatedLayout>
+            <ExamPage />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>

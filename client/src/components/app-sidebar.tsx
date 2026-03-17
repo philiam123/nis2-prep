@@ -14,7 +14,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Shield, LayoutDashboard, BookOpen, HelpCircle, Award, Moon, Sun, LogOut, ShieldCheck } from "lucide-react";
+import { Shield, LayoutDashboard, BookOpen, HelpCircle, Award, GraduationCap, Moon, Sun, LogOut, ShieldCheck } from "lucide-react";
 
 
 export function AppSidebar() {
@@ -31,6 +31,7 @@ export function AppSidebar() {
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/study", label: "Kursmaterial", icon: BookOpen },
     { path: "/quiz", label: "Quiz", icon: HelpCircle },
+    { path: "/exam", label: "Slutprov", icon: GraduationCap },
     { path: "/certificate", label: "Certifikat", icon: Award },
   ];
 
