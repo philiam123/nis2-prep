@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Lock, Mail, Save, Loader2, CheckCircle } from "lucide-react";
+import { User, Lock, Mail, Loader2, CheckCircle } from "lucide-react";
 
 function parseErrorMessage(err: any, fallback: string): string {
   if (!err?.message) return fallback;
-  // apiRequest throws Error with message like "400: {\"message\":\"Fel nuvarande lösenord\"}"
   const match = err.message.match(/^\d+:\s*(.+)/);
   if (match) {
     try {
@@ -25,37 +24,14 @@ function parseErrorMessage(err: any, fallback: string): string {
 }
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
-
-  // Name form
-  const [name, setName] = useState(user?.name || "");
-  const [nameSaving, setNameSaving] = useState(false);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
-
-  const handleNameUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    setNameSaving(true);
-    try {
-      await apiRequest("PATCH", "/api/auth/profile", { name: name.trim() });
-      await refreshUser();
-      toast({
-        title: "Namn uppdaterat",
-        description: "Ditt namn har ändrats.",
-      });
-    } catch (err: any) {
-      toast({ title: "Fel", description: parseErrorMessage(err, "Kunde inte uppdatera namn"), variant: "destructive" });
-    } finally {
-      setNameSaving(false);
-    }
-  };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +87,7 @@ export default function ProfilePage() {
       <div>
         <h1 className="text-xl font-bold tracking-tight">Min profil</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Hantera dina uppgifter och lösenord
+          Hantera ditt konto och lösenord
         </p>
       </div>
 
@@ -119,11 +95,17 @@ export default function ProfilePage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <User className="h-4 w-4 text-muted-foreground" />
             Kontoinformation
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="grid gap-1">
+            <Label className="text-xs text-muted-foreground">Namn</Label>
+            <p className="text-sm font-medium" data-testid="profile-name">
+              {user?.name}
+            </p>
+          </div>
           <div className="grid gap-1">
             <Label className="text-xs text-muted-foreground">E-post</Label>
             <p className="text-sm font-medium" data-testid="profile-email">
@@ -144,45 +126,6 @@ export default function ProfilePage() {
               <span className="text-xs font-medium text-primary">Administratör</span>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Name change */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            Ändra namn
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Detta namn visas i din profil och på certifikat.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleNameUpdate} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Fullständigt namn</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ditt namn"
-                data-testid="input-name"
-              />
-            </div>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={nameSaving || !name.trim() || name.trim() === user?.name}
-              data-testid="button-save-name"
-            >
-              {nameSaving ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sparar...</>
-              ) : (
-                <><Save className="mr-2 h-4 w-4" /> Spara namn</>
-              )}
-            </Button>
-          </form>
         </CardContent>
       </Card>
 

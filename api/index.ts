@@ -384,12 +384,7 @@ app.get("/api/auth/me", (req, res) => {
 app.patch("/api/auth/profile", requireAuth, async (req, res) => {
   try {
     const user = req.user as User;
-    const { name, currentPassword, newPassword } = req.body;
-
-    // Update name
-    if (name && name.trim().length > 0) {
-      await dbPool.query('UPDATE users SET name = $1 WHERE id = $2', [name.trim(), user.id]);
-    }
+    const { currentPassword, newPassword } = req.body;
 
     // Update password
     if (newPassword) {
