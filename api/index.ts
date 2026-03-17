@@ -218,23 +218,23 @@ class PgStorage {
 
   async getCertificates(userId: number): Promise<Certificate[]> {
     const { rows } = await dbPool.query(
-      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", issued_at as "issuedAt" FROM certificates WHERE user_id = $1',
+      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt" FROM certificates WHERE user_id = $1',
       [userId]
     );
     return rows;
   }
 
-  async createCertificate(cert: { userId: number; certificateId: string; examScore: number; totalQuestions: number }): Promise<Certificate> {
+  async createCertificate(cert: { userId: number; certificateId: string; examScore: number; totalQuestions: number; track: number }): Promise<Certificate> {
     const { rows } = await dbPool.query(
-      'INSERT INTO certificates (user_id, certificate_id, exam_score, total_questions) VALUES ($1, $2, $3, $4) RETURNING id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", issued_at as "issuedAt"',
-      [cert.userId, cert.certificateId, cert.examScore, cert.totalQuestions]
+      'INSERT INTO certificates (user_id, certificate_id, exam_score, total_questions, track) VALUES ($1, $2, $3, $4, $5) RETURNING id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt"',
+      [cert.userId, cert.certificateId, cert.examScore, cert.totalQuestions, cert.track]
     );
     return rows[0];
   }
 
   async getCertificateById(certificateId: string): Promise<Certificate | undefined> {
     const { rows } = await dbPool.query(
-      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", issued_at as "issuedAt" FROM certificates WHERE certificate_id = $1',
+      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt" FROM certificates WHERE certificate_id = $1',
       [certificateId]
     );
     return rows[0] || undefined;
@@ -567,10 +567,14 @@ app.get("/api/certificates", requireAuth, async (req, res) => {
 app.post("/api/certificates", requireAuth, async (req, res) => {
   try {
     const user = req.user as User;
-    const { examScore, totalQuestions } = req.body;
+    const { examScore, totalQuestions, track } = req.body;
 
-    if (!examScore || !totalQuestions) {
-      return res.status(400).json({ message: "Missing exam score or total questions" });
+    if (examScore == null || !totalQuestions || !track) {
+      return res.status(400).json({ message: "Missing exam score, total questions, or track" });
+    }
+
+    if (![1, 2].includes(track)) {
+      return res.status(400).json({ message: "Invalid track (must be 1 or 2)" });
     }
 
     const scorePercent = Math.round((examScore / totalQuestions) * 100);
@@ -578,11 +582,18 @@ app.post("/api/certificates", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "Score below passing threshold (70%)" });
     }
 
+    // Check for existing certificate for this track
+    const existing = await storage.getCertificates(user.id);
+    if (existing.find((c: any) => c.track === track)) {
+      return res.status(400).json({ message: "Du har redan ett certifikat för detta spår" });
+    }
+
     const cert = await storage.createCertificate({
       userId: user.id,
       certificateId: randomUUID(),
       examScore,
       totalQuestions,
+      track,
     });
     res.json(cert);
   } catch (err: any) {
