@@ -246,11 +246,11 @@ const storage = new PgStorage();
 // Seed admin if not exists
 (async () => {
   try {
-    const admin = await storage.getUserByEmail("admin@nis2prep.se");
+    const admin = await storage.getUserByEmail("admin@nis2.com");
     if (!admin) {
       await dbPool.query(
         'INSERT INTO users (email, password, name, has_paid, is_admin) VALUES ($1, $2, $3, true, true) ON CONFLICT (email) DO NOTHING',
-        ["admin@nis2prep.se", simpleHash("Nis2Admin2026!"), "Admin"]
+        ["admin@nis2.com", simpleHash("Nis2Admin2026!"), "Admin"]
       );
       console.log("Admin account seeded");
     }

@@ -3,7 +3,7 @@
 ## Förutsättningar
 - GitHub-konto (skapat ✅)
 - Vercel-konto (skapat ✅)
-- Domän: nis2prep.se (Namecheap)
+- Domän: nis2utbildning.com (Namecheap)
 
 ---
 
@@ -42,16 +42,16 @@ Byt ut `DITT-ANVÄNDARNAMN` mot ditt GitHub-användarnamn.
 6. Klicka **Deploy**
 7. Vänta tills deployen är klar — du får en `.vercel.app`-URL
 
-## Steg 4: Koppla din domän (nis2prep.se)
+## Steg 4: Koppla din domän (nis2utbildning.com)
 
 ### I Vercel:
 1. Gå till ditt projekt → **Settings** → **Domains**
-2. Lägg till: `nis2prep.se`
+2. Lägg till: `nis2utbildning.com`
 3. Vercel visar vilka DNS-records du behöver ställa in
 
 ### I Namecheap:
 1. Logga in på Namecheap
-2. Gå till **Domain List** → `nis2prep.se` → **Manage**
+2. Gå till **Domain List** → `nis2utbildning.com` → **Manage**
 3. Under **DNS**, välj **Custom DNS** eller **Advanced DNS**
 4. Lägg till dessa records (som Vercel visar):
 
@@ -65,9 +65,9 @@ Byt ut `DITT-ANVÄNDARNAMN` mot ditt GitHub-användarnamn.
 
 ## Steg 5: Verifiera
 
-1. Gå till `https://nis2prep.se`
+1. Gå till `https://nis2utbildning.com`
 2. Testa registrering och inloggning
-3. Testa admin-login: `admin@nis2prep.se` / `AigpAdmin2026!`
+3. Testa admin-login: `admin@nis2.com` / `AigpAdmin2026!`
 
 ---
 
@@ -84,7 +84,7 @@ Appen använder just nu **in-memory lagring**. Det betyder:
 - Integrera Stripe för riktiga betalningar — gå till Stripe Dashboard för API-nycklar
 
 ### Admin-konto
-- Email: `admin@nis2prep.se`
+- Email: `admin@nis2.com`
 - Lösenord: `AigpAdmin2026!`
 - Byt lösenordet i `server/storage.ts` (seedAdmin-metoden) innan produktion
 

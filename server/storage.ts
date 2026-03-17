@@ -41,7 +41,7 @@ export class MemStorage implements IStorage {
     const adminPassword = this.hashPassword("Nis2Admin2026!");
     const admin: User = {
       id: this.nextUserId++,
-      email: "admin@nis2prep.se",
+      email: "admin@nis2.com",
       password: adminPassword,
       name: "Admin",
       hasPaid: true,

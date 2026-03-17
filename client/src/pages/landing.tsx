@@ -18,7 +18,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-cyan-400" />
-              <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">NIS2 Prep</span>
+              <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">NIS2 Utbildning</span>
             </div>
             <span className="text-xs text-white/40 hidden sm:inline">av Electrab</span>
           </div>
@@ -51,7 +51,7 @@ export default function LandingPage() {
             <span>Cybersäkerhetslagen i kraft sedan 15 januari 2026</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-tight break-words">
-            NIS2 Prep — <br className="hidden sm:block" />
+            NIS2 Utbildning — <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
               Cybersäkerhets&shy;utbildning
             </span>{" "}
@@ -188,7 +188,7 @@ export default function LandingPage() {
       {/* Key Selling Points */}
       <section className="py-20 px-4 bg-white/[0.02] border-y border-white/10">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Varför NIS2 Prep?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Varför NIS2 Utbildning?</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
@@ -355,7 +355,7 @@ export default function LandingPage() {
             <a href="mailto:philip.nilsson@electrab.se" className="text-xs text-white/40 hover:text-white/70 transition-colors">Kontakt</a>
           </div>
           <p className="text-xs text-white/30">
-            © 2026 Electrab AB. NIS2 Prep är en utbildningsplattform för cybersäkerhet baserad på EU:s NIS2-direktiv (2022/2555) och
+            © 2026 Electrab AB. NIS2 Utbildning är en utbildningsplattform för cybersäkerhet baserad på EU:s NIS2-direktiv (2022/2555) och
             den svenska Cybersäkerhetslagen (2025:1506). Utbildningen ersätter inte juridisk rådgivning.
           </p>
         </div>

@@ -40,7 +40,7 @@ function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Shield className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold">NIS2 Prep</span>
+          <span className="text-2xl font-bold">NIS2 Utbildning</span>
         </div>
         <Card>
           <CardHeader>
@@ -126,7 +126,7 @@ function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Shield className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold">NIS2 Prep</span>
+          <span className="text-2xl font-bold">NIS2 Utbildning</span>
         </div>
         <Card>
           <CardHeader>

@@ -12,7 +12,7 @@ export default function CookiesPage() {
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-cyan-400" />
             <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              NIS2 Prep
+              NIS2 Utbildning
             </span>
             <span className="text-xs text-white/40 hidden sm:inline">av Electrab</span>
           </div>
@@ -44,7 +44,7 @@ export default function CookiesPage() {
           {/* 2. Vilka cookies vi använder */}
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">2. Vilka cookies använder vi?</h2>
-            <p>NIS2 Prep använder enbart nödvändiga cookies:</p>
+            <p>NIS2 Utbildning använder enbart nödvändiga cookies:</p>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
@@ -89,7 +89,7 @@ export default function CookiesPage() {
             <h2 className="text-xl font-semibold text-white mb-3">4. Hantera cookies</h2>
             <p>
               Du kan blockera eller radera cookies via din webbläsares inställningar. Observera
-              att om du blockerar sessionscookien kommer du inte att kunna logga in på NIS2 Prep.
+              att om du blockerar sessionscookien kommer du inte att kunna logga in på NIS2 Utbildning.
             </p>
           </section>
 
@@ -121,7 +121,7 @@ export default function CookiesPage() {
       <footer className="py-8 px-4 border-t border-white/10">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-xs text-white/30">
-            © 2026 Electrab AB. NIS2 Prep av Electrab.
+            © 2026 Electrab AB. NIS2 Utbildning av Electrab.
           </p>
         </div>
       </footer>

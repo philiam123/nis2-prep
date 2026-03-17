@@ -73,7 +73,7 @@ function VerifyResult({ certId }: { certId: string }) {
             Verifierat certifikat
           </h2>
           <p className="text-muted-foreground text-sm">
-            Detta certifikat är utfärdat av NIS2 Prep och verifierat som giltigt.
+            Detta certifikat är utfärdat av NIS2 Utbildning och verifierat som giltigt.
           </p>
         </CardContent>
       </Card>
@@ -114,7 +114,7 @@ function VerifyResult({ certId }: { certId: string }) {
             <div className="pt-4 border-t space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Utfärdare</p>
               <p className="font-medium">Electrab AB</p>
-              <p className="text-sm text-muted-foreground">via NIS2 Prep — nis2utbildning.com</p>
+              <p className="text-sm text-muted-foreground">via NIS2 Utbildning — nis2utbildning.com</p>
             </div>
           </div>
         </CardContent>
@@ -145,7 +145,7 @@ export default function VerifyPage() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            <span className="font-bold">NIS2 Prep</span>
+            <span className="font-bold">NIS2 Utbildning</span>
             <span className="text-xs text-muted-foreground">av Electrab</span>
           </a>
           <a

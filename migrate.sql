@@ -1,4 +1,4 @@
--- NIS2 Prep Database Schema
+-- NIS2 Utbildning Database Schema
 -- Run against PostgreSQL to create all required tables
 
 CREATE TABLE IF NOT EXISTS users (

@@ -95,7 +95,7 @@ export default function CertificatePage() {
     <div class="header">
       <div class="logo">
         <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span class="logo-text">NIS2 Prep</span>
+        <span class="logo-text">NIS2 Utbildning</span>
       </div>
       <div class="title">Kurscertifikat</div>
       <div class="subtitle">NIS2 Cybersäkerhetsutbildning för energisektorn</div>
@@ -197,7 +197,7 @@ export default function CertificatePage() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="h-6 w-6 text-cyan-400" />
             <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              NIS2 Prep
+              NIS2 Utbildning
             </span>
           </div>
 

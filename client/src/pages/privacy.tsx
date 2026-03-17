@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-cyan-400" />
             <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              NIS2 Prep
+              NIS2 Utbildning
             </span>
             <span className="text-xs text-white/40 hidden sm:inline">av Electrab</span>
           </div>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-white mb-3">1. Personuppgiftsansvarig</h2>
             <p>
               Electrab AB ansvarar för behandlingen av dina personuppgifter i samband med
-              tjänsten NIS2 Prep.
+              tjänsten NIS2 Utbildning.
             </p>
             <ul className="mt-3 space-y-1 text-sm">
               <li><span className="text-white/50">Företag:</span> Electrab AB</li>
@@ -168,7 +168,7 @@ export default function PrivacyPage() {
       <footer className="py-8 px-4 border-t border-white/10">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-xs text-white/30">
-            © 2026 Electrab AB. NIS2 Prep av Electrab.
+            © 2026 Electrab AB. NIS2 Utbildning av Electrab.
           </p>
         </div>
       </footer>

@@ -61,7 +61,7 @@ export default function PaymentSuccessPage() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Shield className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold">NIS2 Prep</span>
+          <span className="text-2xl font-bold">NIS2 Utbildning</span>
         </div>
 
         <Card>
@@ -79,7 +79,7 @@ export default function PaymentSuccessPage() {
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
                 <h2 className="text-xl font-semibold">Betalning genomförd!</h2>
                 <p className="text-sm text-muted-foreground">
-                  Välkommen till NIS2 Prep. Du har nu tillgång till hela utbildningen.
+                  Välkommen till NIS2 Utbildning. Du har nu tillgång till hela utbildningen.
                 </p>
                 <Button onClick={() => navigate("/dashboard")} className="mt-4">
                   Gå till dashboard
