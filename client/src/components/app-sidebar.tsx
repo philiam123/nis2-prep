@@ -14,7 +14,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Shield, LayoutDashboard, BookOpen, HelpCircle, Award, GraduationCap, Moon, Sun, LogOut, ShieldCheck } from "lucide-react";
+import { Shield, LayoutDashboard, BookOpen, HelpCircle, Award, GraduationCap, Moon, Sun, LogOut, ShieldCheck, Settings } from "lucide-react";
 
 
 export function AppSidebar() {
@@ -92,12 +92,19 @@ export function AppSidebar() {
             )}
           </Button>
           {user && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground truncate">{user.name}</span>
+            <div className="flex items-center justify-between gap-1">
+              <button
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors truncate min-w-0"
+                onClick={() => navigate("/profile")}
+                data-testid="sidebar-profile-link"
+              >
+                <Settings className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{user.name}</span>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 shrink-0"
                 onClick={handleLogout}
                 data-testid="sidebar-logout"
               >

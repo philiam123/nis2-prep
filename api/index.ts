@@ -380,6 +380,46 @@ app.get("/api/auth/me", (req, res) => {
   res.json(safeUser);
 });
 
+// ── Profile Update ──
+app.patch("/api/auth/profile", requireAuth, async (req, res) => {
+  try {
+    const user = req.user as User;
+    const { name, currentPassword, newPassword } = req.body;
+
+    // Update name
+    if (name && name.trim().length > 0) {
+      await dbPool.query('UPDATE users SET name = $1 WHERE id = $2', [name.trim(), user.id]);
+    }
+
+    // Update password
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Nuvarande lösenord krävs" });
+      }
+      if (!verifyHash(currentPassword, user.password)) {
+        return res.status(400).json({ message: "Fel nuvarande lösenord" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "Nytt lösenord måste vara minst 6 tecken" });
+      }
+      await dbPool.query('UPDATE users SET password = $1 WHERE id = $2', [simpleHash(newPassword), user.id]);
+    }
+
+    const updated = await storage.getUser(user.id);
+    if (updated) {
+      req.login(updated, (err) => {
+        if (err) return res.status(500).json({ message: "Sessionsuppdatering misslyckades" });
+        const { password: _, ...safeUser } = updated;
+        res.json(safeUser);
+      });
+    } else {
+      res.status(500).json({ message: "Kunde inte hämta uppdaterad profil" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || "Profiluppdatering misslyckades" });
+  }
+});
+
 // ── Payment Routes (Stripe Checkout) ──
 app.post("/api/payment/create-checkout", requireAuth, async (req, res) => {
   try {

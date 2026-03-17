@@ -23,6 +23,7 @@ import AdminPage from "@/pages/admin";
 import VerifyPage from "@/pages/verify";
 import PrivacyPage from "@/pages/privacy";
 import CookiesPage from "@/pages/cookies";
+import ProfilePage from "@/pages/profile";
 
 function LoadingScreen() {
   return (
@@ -130,6 +131,13 @@ function AppRouter() {
         <ProtectedRoute>
           <AuthenticatedLayout>
             <CertificatePage />
+          </AuthenticatedLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <AuthenticatedLayout>
+            <ProfilePage />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>
