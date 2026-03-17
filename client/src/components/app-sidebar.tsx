@@ -40,7 +40,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1">
           <Shield className="h-6 w-6 text-primary" />
-          <span className="font-bold text-sm">NIS2 Prep</span>
+          <span className="font-bold text-sm">Meny</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

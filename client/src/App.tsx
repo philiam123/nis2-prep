@@ -71,9 +71,9 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-12 items-center gap-2 border-b px-4 md:hidden">
-          <SidebarTrigger />
-          <span className="font-semibold text-sm">NIS2 Prep</span>
+        <header className="flex h-12 items-center border-b px-4">
+          <SidebarTrigger className="md:hidden" />
+          <span className="font-semibold text-sm flex-1 text-center">NIS2 Kurs</span>
         </header>
         <div className="flex-1 overflow-auto min-w-0">
           {children}
