@@ -66,6 +66,7 @@ export const certificates = pgTable("certificates", {
   certificateId: text("certificate_id").notNull().unique(),
   examScore: integer("exam_score").notNull(),
   totalQuestions: integer("total_questions").notNull(),
+  track: integer("track").notNull().default(1),
   issuedAt: timestamp("issued_at").defaultNow(),
 });
 

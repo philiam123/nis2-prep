@@ -41,17 +41,19 @@ export async function sendPaymentConfirmation(to: string, name: string) {
   } catch (err) { console.error('Payment email failed:', err); }
 }
 
-export async function sendCertificateEmail(to: string, name: string, certificateId: string, score: number, total: number) {
+export async function sendCertificateEmail(to: string, name: string, certificateId: string, score: number, total: number, trackName?: string) {
   if (!resend) return;
   const pct = Math.round((score / total) * 100);
+  const trackLabel = trackName ? ` — ${trackName}` : '';
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: 'Grattis! Ditt NIS2-certifikat',
+      subject: `Grattis! Ditt NIS2-certifikat${trackLabel}`,
       html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h1 style="color:#0F1729">Grattis, ${name}!</h1>
-        <p>Du har klarat slutprovet med <strong>${pct}%</strong> (${score}/${total} rätt) och erhållit ditt NIS2-certifikat.</p>
+        <p>Du har klarat slutprovet${trackLabel} med <strong>${pct}%</strong> (${score}/${total} rätt) och erhållit ditt NIS2-certifikat.</p>
+        ${trackName ? `<p><strong>Spår:</strong> ${trackName}</p>` : ''}
         <p><strong>Certifikat-ID:</strong> <code>${certificateId}</code></p>
         <p>Verifiera certifikatet här:</p>
         <p><a href="https://nis2utbildning.com/#/verify/${certificateId}" style="display:inline-block;padding:12px 24px;background:linear-gradient(to right,#06b6d4,#3b82f6);color:white;text-decoration:none;border-radius:8px;font-weight:600">Verifiera certifikat</a></p>

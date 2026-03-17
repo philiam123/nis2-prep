@@ -150,6 +150,7 @@ export class MemStorage implements IStorage {
       certificateId: cert.certificateId,
       examScore: cert.examScore,
       totalQuestions: cert.totalQuestions,
+      track: cert.track ?? 1,
       issuedAt: new Date(),
     };
     const certs = this.certificatesMap.get(cert.userId) || [];
@@ -159,8 +160,8 @@ export class MemStorage implements IStorage {
   }
 
   async getCertificateById(certificateId: string): Promise<Certificate | undefined> {
-    for (const certs of this.certificatesMap.values()) {
-      const cert = certs.find(c => c.certificateId === certificateId);
+    for (const certs of Array.from(this.certificatesMap.values())) {
+      const cert = certs.find((c: Certificate) => c.certificateId === certificateId);
       if (cert) return cert;
     }
     return undefined;

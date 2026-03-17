@@ -299,10 +299,14 @@ export async function registerRoutes(server: Server, app: Express) {
   app.post("/api/certificates", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
-      const { examScore, totalQuestions } = req.body;
-      
+      const { examScore, totalQuestions, track } = req.body;
+
       if (!examScore || !totalQuestions) {
         return res.status(400).json({ message: "Missing exam score or total questions" });
+      }
+
+      if (!track || ![1, 2].includes(track)) {
+        return res.status(400).json({ message: "Invalid track (must be 1 or 2)" });
       }
 
       const scorePercent = Math.round((examScore / totalQuestions) * 100);
@@ -310,13 +314,21 @@ export async function registerRoutes(server: Server, app: Express) {
         return res.status(400).json({ message: "Score below passing threshold (70%)" });
       }
 
+      // Check if user already has a certificate for this track
+      const existing = await storage.getCertificates(user.id);
+      if (existing.some(c => c.track === track)) {
+        return res.status(400).json({ message: "Du har redan ett certifikat för detta spår" });
+      }
+
       const cert = await storage.createCertificate({
         userId: user.id,
         certificateId: randomUUID(),
         examScore,
         totalQuestions,
+        track,
       });
-      sendCertificateEmail((req.user as User).email, (req.user as User).name, cert.certificateId, cert.examScore, cert.totalQuestions);
+      const trackName = track === 1 ? "Ledning & Styrelse" : "All Personal";
+      sendCertificateEmail((req.user as User).email, (req.user as User).name, cert.certificateId, cert.examScore, cert.totalQuestions, trackName);
       res.json(cert);
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Failed to create certificate" });

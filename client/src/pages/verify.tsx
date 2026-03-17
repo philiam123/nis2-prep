@@ -12,6 +12,7 @@ interface VerifyCertificate {
   certificateId: string;
   examScore: number;
   totalQuestions: number;
+  track: number;
   issuedAt: string;
   userName: string;
   userEmail: string;
@@ -75,6 +76,11 @@ function VerifyResult({ certId }: { certId: string }) {
           <p className="text-muted-foreground text-sm">
             Detta certifikat är utfärdat av NIS2 Utbildning och verifierat som giltigt.
           </p>
+          {cert.track && (
+            <p className="text-sm font-medium" style={{ color: cert.track === 1 ? "#00D4FF" : "#0066FF" }}>
+              {cert.track === 1 ? "Track 1: Ledning & Styrelse" : "Track 2: All Personal"}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -106,7 +112,10 @@ function VerifyResult({ certId }: { certId: string }) {
             </div>
             <div className="pt-4 border-t space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Utbildning</p>
-              <p className="font-medium">NIS2 Cybersäkerhetsutbildning för energisektorn</p>
+              <p className="font-medium">
+                NIS2 Cybersäkerhetsutbildning för energisektorn
+                {cert.track && ` — ${cert.track === 1 ? "Ledning & Styrelse" : "All Personal"}`}
+              </p>
               <p className="text-sm text-muted-foreground">
                 I enlighet med EU:s NIS2-direktiv (2022/2555) och Cybersäkerhetslagen (2025:1506)
               </p>

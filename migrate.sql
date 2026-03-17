@@ -35,5 +35,9 @@ CREATE TABLE IF NOT EXISTS certificates (
   certificate_id TEXT NOT NULL UNIQUE,
   exam_score INTEGER NOT NULL,
   total_questions INTEGER NOT NULL,
+  track INTEGER NOT NULL DEFAULT 1,
   issued_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Migration: add track column if table already exists
+ALTER TABLE certificates ADD COLUMN IF NOT EXISTS track INTEGER NOT NULL DEFAULT 1;

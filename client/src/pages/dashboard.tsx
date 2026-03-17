@@ -49,6 +49,9 @@ export default function DashboardPage() {
     .slice(0, 5);
 
   const hasCertificate = certificates.length > 0;
+  const track1Cert = certificates.find((c: any) => c.track === 1);
+  const track2Cert = certificates.find((c: any) => c.track === 2);
+  const bothCerts = !!track1Cert && !!track2Cert;
 
   // Exam readiness
   const examReadiness = useMemo(() => {
@@ -81,32 +84,69 @@ export default function DashboardPage() {
       </div>
 
       {/* Certificate Status */}
-      <Card className={hasCertificate ? "border-green-500/30 bg-green-500/5" : "border-primary/20"}>
-        <CardContent className="pt-6">
+      <Card className={bothCerts ? "border-green-500/30 bg-green-500/5" : "border-primary/20"}>
+        <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4">
-            <Award className={`h-10 w-10 ${hasCertificate ? "text-green-500" : "text-muted-foreground"}`} />
+            <Award className={`h-10 w-10 shrink-0 ${bothCerts ? "text-green-500" : "text-muted-foreground"}`} />
             <div className="flex-1">
-              {hasCertificate ? (
+              {bothCerts ? (
                 <>
-                  <p className="font-semibold text-green-600 dark:text-green-400">Certifikat utfärdat!</p>
-                  <p className="text-sm text-muted-foreground">Du har godkänts i NIS2 Cybersäkerhetsutbildning.</p>
+                  <p className="font-semibold text-green-600 dark:text-green-400">Alla certifikat utfärdade!</p>
+                  <p className="text-sm text-muted-foreground">Du har godkänts i båda spåren.</p>
+                </>
+              ) : hasCertificate ? (
+                <>
+                  <p className="font-semibold text-green-600 dark:text-green-400">Certifikat utfärdat</p>
+                  <p className="text-sm text-muted-foreground">Slutför fler slutprov för att få alla certifikat.</p>
                 </>
               ) : (
                 <>
                   <p className="font-semibold">Certifikat</p>
                   <p className="text-sm text-muted-foreground">
-                    Slutför slutprovet med minst 70% för att få ditt certifikat.
+                    Slutför slutprov med minst 70% för att få dina certifikat.
                   </p>
                 </>
               )}
             </div>
-            <Button
-              variant={hasCertificate ? "default" : "outline"}
-              size="sm"
-              onClick={() => navigate(hasCertificate ? "/certificate" : "/exam")}
-            >
-              {hasCertificate ? "Visa certifikat" : "Påbörja slutprov"}
-            </Button>
+            {hasCertificate && (
+              <Button variant="default" size="sm" onClick={() => navigate("/certificate")}>
+                Visa certifikat
+              </Button>
+            )}
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${track1Cert ? "border-green-500/30 bg-green-500/5" : "border-border"}`}>
+              <Shield className="h-5 w-5 shrink-0" style={{ color: "#00D4FF" }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Ledning & Styrelse</p>
+                {track1Cert ? (
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Godkänt — {Math.round((track1Cert.examScore / track1Cert.totalQuestions) * 100)}%
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Ej avklarat</p>
+                )}
+              </div>
+              {!track1Cert && (
+                <Button variant="outline" size="sm" onClick={() => navigate("/exam")}>Slutprov</Button>
+              )}
+            </div>
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${track2Cert ? "border-green-500/30 bg-green-500/5" : "border-border"}`}>
+              <Users className="h-5 w-5 shrink-0" style={{ color: "#0066FF" }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">All Personal</p>
+                {track2Cert ? (
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Godkänt — {Math.round((track2Cert.examScore / track2Cert.totalQuestions) * 100)}%
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Ej avklarat</p>
+                )}
+              </div>
+              {!track2Cert && (
+                <Button variant="outline" size="sm" onClick={() => navigate("/exam")}>Slutprov</Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

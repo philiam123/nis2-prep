@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, Clock, RotateCcw, Save, Award, Lock, CheckCircle2 } from "lucide-react";
+import { GraduationCap, Clock, RotateCcw, Save, Award, Lock, CheckCircle2, Shield, Users } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
@@ -21,6 +21,34 @@ interface Answer {
   selectedOption: number;
   correct: boolean;
 }
+
+interface TrackConfig {
+  domain: number;
+  questionCount: number;
+  timeSeconds: number;
+  title: string;
+  shortTitle: string;
+  color: string;
+}
+
+const TRACK_CONFIGS: Record<number, TrackConfig> = {
+  1: {
+    domain: 1,
+    questionCount: 15,
+    timeSeconds: 30 * 60,
+    title: "Ledning & Styrelse",
+    shortTitle: "Ledning & Styrelse",
+    color: "#00D4FF",
+  },
+  2: {
+    domain: 2,
+    questionCount: 20,
+    timeSeconds: 40 * 60,
+    title: "All Personal",
+    shortTitle: "All Personal",
+    color: "#0066FF",
+  },
+};
 
 /** Shuffle array using Fisher-Yates */
 function shuffleArray<T>(arr: T[]): T[] {
@@ -50,6 +78,7 @@ export default function ExamPage() {
   const [, navigate] = useLocation();
 
   const [screen, setScreen] = useState<Screen>("pre-exam");
+  const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -66,7 +95,8 @@ export default function ExamPage() {
     queryKey: ["/api/certificates"],
   });
 
-  const hasCertificate = certificates.length > 0;
+  const track1Cert = certificates.find((c: any) => c.track === 1);
+  const track2Cert = certificates.find((c: any) => c.track === 2);
 
   const saveResultFn = useCallback(async (data: any) => {
     try {
@@ -132,21 +162,22 @@ export default function ExamPage() {
     };
   }, [examActive]);
 
-  const startExam = () => {
-    const allDomains = [1, 2];
-    const filtered = allQuestions.filter((q) => allDomains.includes(q.domain));
+  const startExam = (track: number) => {
+    const config = TRACK_CONFIGS[track];
+    const filtered = allQuestions.filter((q) => q.domain === config.domain);
     const shuffled = shuffleArray(filtered);
-    const count = Math.min(25, shuffled.length);
+    const count = Math.min(config.questionCount, shuffled.length);
     const selected = shuffled.slice(0, count);
     const finalQuestions = selected.map(q => shuffleQuestion(q));
 
+    setSelectedTrack(track);
     setQuestions(finalQuestions);
     setCurrentIndex(0);
     setSelectedOption(null);
     setAnswers([]);
     setSaved(false);
     setAnswerLocked(false);
-    setTimeRemaining(2700); // 45 min
+    setTimeRemaining(config.timeSeconds);
     setScreen("question");
     setExamActive(true);
     examActiveRef.current = true;
@@ -179,23 +210,27 @@ export default function ExamPage() {
   const scorePercent = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
   const isPass = scorePercent >= 70;
 
+  const trackConfig = selectedTrack ? TRACK_CONFIGS[selectedTrack] : null;
+  const passingCount = trackConfig ? Math.ceil(trackConfig.questionCount * 0.7) : 0;
+
   const domainBreakdown = useMemo(() => {
-    return domainData.map((domain) => {
-      const domainAnswers = answers.filter(
-        (a) => questions[a.questionIndex]?.domain === domain.id
-      );
-      const total = domainAnswers.length;
-      const correct = domainAnswers.filter((a) => a.correct).length;
-      return {
-        name: `Track ${domain.numeral}`,
-        shortName: domain.shortTitle,
-        correct,
-        total,
-        percent: total > 0 ? Math.round((correct / total) * 100) : 0,
-        color: domain.color,
-      };
-    });
-  }, [answers, questions]);
+    if (!selectedTrack) return [];
+    const domain = domainData.find(d => d.id === selectedTrack);
+    if (!domain) return [];
+    const domainAnswers = answers.filter(
+      (a) => questions[a.questionIndex]?.domain === domain.id
+    );
+    const total = domainAnswers.length;
+    const correct = domainAnswers.filter((a) => a.correct).length;
+    return [{
+      name: `Track ${domain.numeral}`,
+      shortName: domain.shortTitle,
+      correct,
+      total,
+      percent: total > 0 ? Math.round((correct / total) * 100) : 0,
+      color: domain.color,
+    }];
+  }, [answers, questions, selectedTrack]);
 
   const handleSaveResults = async () => {
     const answersMap: Record<string, number> = {};
@@ -204,7 +239,7 @@ export default function ExamPage() {
       if (q) answersMap[q.subtopic] = a.selectedOption;
     });
     await saveResultFn({
-      domains: [1, 2],
+      domains: [selectedTrack],
       totalQuestions: questions.length,
       correctAnswers: correctCount,
       answers: answersMap,
@@ -220,6 +255,7 @@ export default function ExamPage() {
       await apiRequest("POST", "/api/certificates", {
         examScore: correctCount,
         totalQuestions: questions.length,
+        track: selectedTrack,
       });
     } catch (err) {
       console.error("Failed to create certificate", err);
@@ -242,29 +278,91 @@ export default function ExamPage() {
           <h1 className="text-2xl font-bold" data-testid="exam-title">Slutprov</h1>
         </div>
 
-        {hasCertificate && (
-          <Card className="border-green-500/30 bg-green-500/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <CheckCircle2 className="h-10 w-10 text-green-500" />
-                <div className="flex-1">
-                  <p className="font-semibold text-green-600 dark:text-green-400">Du har redan godkänt slutprovet!</p>
-                  <p className="text-sm text-muted-foreground">Ditt certifikat finns redan tillgängligt.</p>
+        <p className="text-muted-foreground">
+          Välj vilket spår du vill göra slutprov för. Varje spår har sitt eget prov och certifikat.
+        </p>
+
+        {/* Track 1 Card */}
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${track1Cert ? "border-green-500/30 bg-green-500/5" : ""}`}
+          style={{ borderLeftColor: "#00D4FF" }}
+          onClick={() => !track1Cert && startExam(1)}
+          data-testid="exam-track-1"
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Shield className="h-10 w-10 shrink-0" style={{ color: "#00D4FF" }} />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">Ledning & Styrelse</h3>
+                  {track1Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                 </div>
+                <p className="text-sm text-muted-foreground">Track 1 — 15 frågor, 30 minuter, 70% för godkänt</p>
+                {track1Cert && (
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                    Certifikat utfärdat — {Math.round((track1Cert.examScore / track1Cert.totalQuestions) * 100)}%
+                  </p>
+                )}
+              </div>
+              {!track1Cert && (
                 <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate("/certificate")}
-                  data-testid="exam-view-certificate"
+                  className="shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+                  onClick={(e) => { e.stopPropagation(); startExam(1); }}
                 >
+                  Starta prov
+                </Button>
+              )}
+              {track1Cert && (
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate("/certificate"); }}>
                   <Award className="mr-2 h-4 w-4" />
                   Visa certifikat
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
+        {/* Track 2 Card */}
+        <Card
+          className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${track2Cert ? "border-green-500/30 bg-green-500/5" : ""}`}
+          style={{ borderLeftColor: "#0066FF" }}
+          onClick={() => !track2Cert && startExam(2)}
+          data-testid="exam-track-2"
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Users className="h-10 w-10 shrink-0" style={{ color: "#0066FF" }} />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">All Personal</h3>
+                  {track2Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                </div>
+                <p className="text-sm text-muted-foreground">Track 2 — 20 frågor, 40 minuter, 70% för godkänt</p>
+                {track2Cert && (
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                    Certifikat utfärdat — {Math.round((track2Cert.examScore / track2Cert.totalQuestions) * 100)}%
+                  </p>
+                )}
+              </div>
+              {!track2Cert && (
+                <Button
+                  className="shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
+                  onClick={(e) => { e.stopPropagation(); startExam(2); }}
+                >
+                  Starta prov
+                </Button>
+              )}
+              {track2Cert && (
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate("/certificate"); }}>
+                  <Award className="mr-2 h-4 w-4" />
+                  Visa certifikat
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rules */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Regler för slutprovet</CardTitle>
@@ -273,43 +371,29 @@ export default function ExamPage() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-3">
                 <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">1</span>
-                <span>25 frågor från alla moduler</span>
+                <span>Frågorna och svarsalternativen slumpas varje gång</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">2</span>
-                <span>45 minuters tidsgräns</span>
+                <span>Minst 70% rätt för godkänt</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">3</span>
-                <span>Minst 70% rätt (18/25) för godkänt</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">4</span>
                 <span>Du kan inte gå tillbaka och ändra svar</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">5</span>
-                <span>Frågorna och svarsalternativen slumpas varje gång</span>
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">4</span>
+                <span>Varje spår ger ett separat certifikat</span>
               </li>
             </ul>
           </CardContent>
         </Card>
-
-        <Button
-          size="lg"
-          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
-          onClick={startExam}
-          data-testid="exam-start"
-        >
-          <GraduationCap className="mr-2 h-5 w-5" />
-          Påbörja slutprov
-        </Button>
       </div>
     );
   }
 
   // ── QUESTION SCREEN ──
-  if (screen === "question" && questions.length > 0) {
+  if (screen === "question" && questions.length > 0 && trackConfig) {
     const question = questions[currentIndex];
     const answered = answers.find((a) => a.questionIndex === currentIndex);
     const progressPercent = ((currentIndex + 1) / questions.length) * 100;
@@ -318,9 +402,18 @@ export default function ExamPage() {
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground" data-testid="exam-progress-text">
-            Fråga {currentIndex + 1} av {questions.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full"
+              style={{ backgroundColor: `${trackConfig.color}20`, color: trackConfig.color }}
+            >
+              {selectedTrack === 1 ? <Shield className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+              {trackConfig.shortTitle}
+            </span>
+            <span className="text-sm text-muted-foreground" data-testid="exam-progress-text">
+              Fråga {currentIndex + 1} av {questions.length}
+            </span>
+          </div>
           <div className={`flex items-center gap-1 text-sm font-mono ${timeRemaining < 300 ? "text-destructive" : ""}`} data-testid="exam-timer">
             <Clock className="h-4 w-4" />
             {formatTime(timeRemaining)}
@@ -395,10 +488,12 @@ export default function ExamPage() {
   }
 
   // ── RESULTS SCREEN ──
-  if (screen === "results") {
+  if (screen === "results" && trackConfig) {
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold" data-testid="exam-results-title">Resultat — Slutprov</h1>
+        <h1 className="text-2xl font-bold" data-testid="exam-results-title">
+          Resultat — {trackConfig.title}
+        </h1>
 
         <Card>
           <CardContent className="pt-6 text-center">
@@ -422,10 +517,10 @@ export default function ExamPage() {
         {domainBreakdown.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Fördelning per spår</CardTitle>
+              <CardTitle className="text-base">Resultat — {trackConfig.shortTitle}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64" data-testid="exam-domain-chart">
+              <div className="h-48" data-testid="exam-domain-chart">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={domainBreakdown} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -457,7 +552,7 @@ export default function ExamPage() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
-          {isPass && (
+          {isPass && !(selectedTrack === 1 ? track1Cert : track2Cert) && (
             <Button onClick={handleGetCertificate} data-testid="exam-get-certificate" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
               <Award className="mr-2 h-4 w-4" />
               Hämta certifikat
@@ -471,6 +566,7 @@ export default function ExamPage() {
             variant="outline"
             onClick={() => {
               setScreen("pre-exam");
+              setSelectedTrack(null);
               setAnswers([]);
               setCurrentIndex(0);
               setSaved(false);
