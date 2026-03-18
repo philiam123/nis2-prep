@@ -116,7 +116,7 @@ export const domainData: Domain[] = [
             <p>Energisektorn klassas som en sektor av hög kritikalitet (Annex I) i NIS2-direktivet. Inom elsektorn omfattas bland annat:</p>
             <ul>
               <li><strong>Distributionsnätsoperatörer:</strong> Företag som driver elnätet på lokal och regional nivå</li>
-              <li><strong>Transmissionsnätsoperatörer:</strong> Företag som driver stamnätet (t.ex. Svenska Kraftnät)</li>
+              <li><strong>Transmissionsnätsoperatörer:</strong> Företag som driver stamnätet</li>
               <li><strong>Producenter:</strong> Elproducenter inklusive förnybar energi</li>
               <li><strong>Elhandlare:</strong> Företag som säljer el till slutkunder</li>
               <li><strong>Energilagring:</strong> Operatörer av energilagringssystem</li>
@@ -300,9 +300,9 @@ export const domainData: Domain[] = [
             <h4>Ransomware — det största hotet</h4>
             <p>Ransomware är den vanligaste och mest kostsamma typen av cyberattack mot energisektorn:</p>
             <ul>
-              <li><strong>Colonial Pipeline (2021):</strong> En ransomware-attack stängde ner den största bränsleledningen i USA i 6 dagar. 45% av östkustens bränsleförsörjning stoppades. Företaget betalade 4,4 miljoner USD i lösen.</li>
+              <li><strong>Stort bränsleföretag (2021):</strong> En ransomware-attack stängde ner den största bränsleledningen i USA i 6 dagar. 45% av östkustens bränsleförsörjning stoppades. Företaget betalade 4,4 miljoner USD i lösen.</li>
               <li><strong>+70% ökning</strong> av cyberattacker mot energisektorn under 2024, med 1 162 dokumenterade attacker i USA</li>
-              <li><strong>Genomsnittlig kostnad:</strong> Ett dataintrång kostar i genomsnitt 4,88 miljoner USD (IBM Cost of a Data Breach 2024)</li>
+              <li><strong>Genomsnittlig kostnad:</strong> Ett dataintrång kostar i genomsnitt 4,88 miljoner USD enligt branschrapporter (2024)</li>
             </ul>
           </div>
 
@@ -325,7 +325,7 @@ export const domainData: Domain[] = [
             <h4>Statsaktörer</h4>
             <p>Energisektorn är ett prioriterat mål för statsstödda hackergrupper:</p>
             <ul>
-              <li><strong>Ryssland:</strong> Grupper som Sandworm och Dragonfly har utfört attacker mot energi-infrastruktur i Ukraina och Europa</li>
+              <li><strong>Ryssland:</strong> Statsstödda hackergrupper har utfört attacker mot energi-infrastruktur i Ukraina och Europa</li>
               <li><strong>Kina:</strong> APT-grupper riktar sig mot energisektorn för industrispionage</li>
               <li><strong>Iran:</strong> Attacker mot energi- och vatteninfrastruktur i Mellanöstern och globalt</li>
               <li><strong>Ukraina 2015/2016:</strong> Ryska hackare orsakade strömavbrott som drabbade hundratusentals hushåll</li>
@@ -334,7 +334,7 @@ export const domainData: Domain[] = [
 
           <div class="highlight-box">
             <span class="hl-icon">🎯</span>
-            <p><strong>Ukraina 2015:</strong> Hackergruppen Sandworm attackerade tre ukrainska elbolag samtidigt. 230 000 hushåll blev utan ström i upp till 6 timmar. Attacken använde spear-phishing för initial åtkomst, sedan fjärrstyrdes SCADA-systemen direkt.</p>
+            <p><strong>Ukraina 2015:</strong> En statsstödd hackergrupp attackerade tre ukrainska elbolag samtidigt. 230 000 hushåll blev utan ström i upp till 6 timmar. Attacken använde spear-phishing för initial åtkomst, sedan fjärrstyrdes SCADA-systemen direkt.</p>
           </div>
 
           <div class="concept-block">
@@ -571,8 +571,8 @@ export const domainData: Domain[] = [
             <h4>Supply chain-attacker</h4>
             <p>Några av de mest förödande cyberattackerna har gått via leverantörskedjan:</p>
             <ul>
-              <li><strong>SolarWinds (2020):</strong> Angripare komprometterade en mjukvaruuppdatering som distribuerades till 18 000 organisationer, inklusive amerikanska myndigheter</li>
-              <li><strong>Kaseya (2021):</strong> Ransomware distribuerades via IT-managementprogramvara och drabbade 1 500+ företag</li>
+              <li><strong>Företag A (2020):</strong> Angripare komprometterade en mjukvaruuppdatering som distribuerades till 18 000 organisationer, inklusive amerikanska myndigheter</li>
+              <li><strong>Företag B (2021):</strong> Ransomware distribuerades via IT-managementprogramvara och drabbade 1 500+ företag</li>
               <li><strong>Kostnad:</strong> Supply chain-attacker beräknas kosta 138 miljarder USD per år globalt till 2031</li>
             </ul>
           </div>
@@ -584,7 +584,7 @@ export const domainData: Domain[] = [
             </div>
             <div class="stat-card">
               <div class="stat-value">18 000</div>
-              <div class="stat-label">Drabbade (SolarWinds)</div>
+              <div class="stat-label">Drabbade (Företag A)</div>
             </div>
             <div class="stat-card">
               <div class="stat-value">138Md$</div>
@@ -688,7 +688,7 @@ export const domainData: Domain[] = [
             <p>En lösenordshanterare genererar och lagrar unika, starka lösenord för alla dina konton:</p>
             <ul>
               <li>Du behöver bara komma ihåg ETT huvudlösenord</li>
-              <li>Exempel: Bitwarden (gratis, open source), 1Password, LastPass</li>
+              <li>Det finns flera lösenordshanterare — både gratis och betalda alternativ</li>
               <li>Många organisationer tillhandahåller lösenordshanterare till anställda</li>
             </ul>
           </div>
@@ -703,21 +703,21 @@ export const domainData: Domain[] = [
             <p>NIS2 kräver MFA (artikel 21j). MFA innebär att du behöver mer än bara ett lösenord:</p>
             <ul>
               <li><strong>Något du vet:</strong> Lösenord eller PIN</li>
-              <li><strong>Något du har:</strong> Telefon, säkerhetsnyckel (YubiKey)</li>
+              <li><strong>Något du har:</strong> Telefon, fysisk säkerhetsnyckel</li>
               <li><strong>Något du är:</strong> Fingeravtryck, ansiktsigenkänning</li>
             </ul>
             <p>Typer av MFA (från svagast till starkast):</p>
             <ul>
               <li><strong>SMS-kod:</strong> Bättre än ingenting, men kan kapas via SIM-swap</li>
-              <li><strong>Autentiseringsapp:</strong> Microsoft Authenticator, Google Authenticator — genererar tidsbaserade engångskoder (TOTP)</li>
-              <li><strong>Fysisk säkerhetsnyckel:</strong> YubiKey, Titan — starkaste skyddet, immunt mot phishing</li>
+              <li><strong>Autentiseringsapp:</strong> Genererar tidsbaserade engångskoder (TOTP) — det finns flera etablerade appar att välja mellan</li>
+              <li><strong>Fysisk säkerhetsnyckel:</strong> Starkaste skyddet, immunt mot phishing — finns i flera varianter från olika tillverkare</li>
             </ul>
           </div>
 
           <div class="steps-grid">
             <div class="step-box">
               <div class="step-number">1</div>
-              <p><strong>Installera:</strong> Ladda ner en autentiseringsapp (Microsoft Authenticator eller Google Authenticator).</p>
+              <p><strong>Installera:</strong> Ladda ner en autentiseringsapp.</p>
             </div>
             <div class="step-box">
               <div class="step-number">2</div>
@@ -824,7 +824,7 @@ export const domainData: Domain[] = [
           </div>
 
           <div class="key-takeaway">
-            <strong>Energisektorsexempel:</strong> En angripare skickar ett e-postmeddelande som ser ut att komma från Svenska Kraftnät med en "brådskande säkerhetsuppdatering". Bilagan innehåller skadlig kod som ger angriparen tillgång till interna system. Alltid verifiera med avsändaren via en separat kanal!
+            <strong>Energisektorsexempel:</strong> En angripare skickar ett e-postmeddelande som ser ut att komma från en myndighet eller branschorganisation med en "brådskande säkerhetsuppdatering". Bilagan innehåller skadlig kod som ger angriparen tillgång till interna system. Alltid verifiera med avsändaren via en separat kanal!
           </div>
         `,
       },
