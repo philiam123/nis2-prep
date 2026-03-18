@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Award, Download, Shield, QrCode, ExternalLink, Copy, Check, Users, GraduationCap } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import QRCode from "qrcode";
 
 interface CertificateData {
   id: number;
@@ -189,119 +190,163 @@ export default function CertificatePage() {
   const track2Cert = certificates.find(c => c.track === 2);
   const hasCerts = certificates.length > 0;
 
-  const handlePrint = (cert: CertificateData) => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
+  const handlePrint = useCallback(async (cert: CertificateData) => {
     const scorePercent = Math.round((cert.examScore / cert.totalQuestions) * 100);
     const dateStr = new Date(cert.issuedAt).toLocaleDateString("sv-SE", {
       year: "numeric", month: "long", day: "numeric"
     });
     const trackName = getTrackName(cert.track);
+    const trackColor = getTrackColor(cert.track);
     const verifyUrl = `https://nis2utbildning.com/#/verify/${cert.certificateId}`;
+    const userName = user?.name || "Deltagare";
 
-    printWindow.document.write(`
-<!DOCTYPE html>
-<html>
-<head>
-  <title>NIS2 Certifikat — ${user?.name} — ${trackName}</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"><\/script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0F1729; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .certificate {
-      width: 800px; padding: 60px; background: linear-gradient(135deg, #0F1729 0%, #1a2744 100%);
-      border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 16px; color: white; position: relative;
-    }
-    .certificate::before {
-      content: ''; position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px;
-      border: 1px solid rgba(0, 212, 255, 0.1); border-radius: 12px; pointer-events: none;
-    }
-    .header { text-align: center; margin-bottom: 40px; }
-    .logo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px; }
-    .logo svg { width: 32px; height: 32px; }
-    .logo-text { font-size: 18px; font-weight: 700; background: linear-gradient(to right, #00D4FF, #0066FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
-    .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; }
-    .track-label { font-size: 16px; font-weight: 600; color: ${getTrackColor(cert.track)}; margin-top: 8px; }
-    .main { text-align: center; margin: 40px 0; }
-    .label { color: rgba(255,255,255,0.4); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
-    .name { font-size: 36px; font-weight: 600; background: linear-gradient(to right, #00D4FF, #0066FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 32px; }
-    .course { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
-    .details { display: flex; justify-content: center; gap: 48px; margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .detail { text-align: center; }
-    .detail-value { font-size: 18px; font-weight: 600; color: #00D4FF; }
-    .detail-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
-    .footer { text-align: center; margin-top: 40px; color: rgba(255,255,255,0.3); font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 32px; }
-    .footer-text { text-align: center; }
-    .cert-id { font-family: monospace; color: rgba(255,255,255,0.2); }
-    .qr-section { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .qr-section canvas { border-radius: 8px; }
-    .qr-label { font-size: 9px; color: rgba(255,255,255,0.3); }
-    @media print { body { background: white; } .certificate { width: 100%; border-color: #0066FF; } }
-  </style>
-</head>
-<body>
-  <div class="certificate">
-    <div class="header">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span class="logo-text">NIS2 Utbildning</span>
-      </div>
-      <div class="title">Kurscertifikat</div>
-      <div class="subtitle">NIS2 Cybersäkerhetsutbildning för energisektorn</div>
-      <div class="track-label">${trackName}</div>
-    </div>
-    <div class="main">
-      <div class="label">Härmed intygas att</div>
-      <div class="name">${user?.name || "Deltagare"}</div>
-      <div class="course">har genomfört NIS2 Cybersäkerhetsutbildning — ${trackName}</div>
-      <div class="course">i enlighet med EU:s NIS2-direktiv (2022/2555)</div>
-      <div class="course">och Cybersäkerhetslagen (2025:1506)</div>
-    </div>
-    <div class="details">
-      <div class="detail">
-        <div class="detail-value">${scorePercent}%</div>
-        <div class="detail-label">Provresultat</div>
-      </div>
-      <div class="detail">
-        <div class="detail-value">${cert.examScore}/${cert.totalQuestions}</div>
-        <div class="detail-label">Rätta svar</div>
-      </div>
-      <div class="detail">
-        <div class="detail-value">${dateStr}</div>
-        <div class="detail-label">Utfärdat</div>
-      </div>
-    </div>
-    <div class="footer">
-      <div class="footer-text">
-        <p>&copy; 2026 Electrab AB</p>
-        <p class="cert-id" style="margin-top: 8px;">Certifikat-ID: ${cert.certificateId}</p>
-        <p class="cert-id" style="margin-top: 4px;">Verifiera: nis2utbildning.com/#/verify/${cert.certificateId}</p>
-      </div>
-      <div class="qr-section">
-        <canvas id="qr-code"></canvas>
-        <span class="qr-label">Skanna för att verifiera</span>
-      </div>
-    </div>
-  </div>
-  <script>
-    window.onload = function() {
-      QRCode.toCanvas(document.getElementById('qr-code'), '${verifyUrl}', {
+    // Generate a real QR code SVG string
+    let qrSvg = "";
+    try {
+      qrSvg = await QRCode.toString(verifyUrl, {
+        type: "svg",
         width: 80,
         margin: 1,
-        color: { dark: '#00D4FF', light: 'transparent' }
-      }, function() {
-        setTimeout(function() { window.print(); }, 300);
+        color: { dark: "#22d3ee", light: "#00000000" },
       });
-    };
-  <\/script>
+    } catch {
+      qrSvg = `<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="8" fill="rgba(255,255,255,0.1)"/><text x="40" y="40" text-anchor="middle" dominant-baseline="middle" fill="#00D4FF" font-size="7" font-family="monospace">QR</text></svg>`;
+    }
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NIS2 Certifikat — ${userName} — ${trackName}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:#0F1729;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px}
+.cert{width:800px;padding:60px;background:linear-gradient(135deg,#0F1729,#1a2744);border:2px solid rgba(0,212,255,0.3);border-radius:16px;color:#fff;position:relative}
+.cert::before{content:'';position:absolute;top:20px;left:20px;right:20px;bottom:20px;border:1px solid rgba(0,212,255,0.1);border-radius:12px;pointer-events:none}
+.hdr{text-align:center;margin-bottom:40px}
+.logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px}
+.logo svg{width:32px;height:32px}
+.logo-t{font-size:18px;font-weight:700;background:linear-gradient(to right,#00D4FF,#0066FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ttl{font-size:32px;font-weight:700;margin-bottom:8px}
+.sub{color:rgba(255,255,255,0.5);font-size:14px}
+.trk{font-size:16px;font-weight:600;color:${trackColor};margin-top:8px}
+.main{text-align:center;margin:40px 0}
+.lbl{color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.nm{font-size:36px;font-weight:600;background:linear-gradient(to right,#00D4FF,#0066FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:32px}
+.crs{font-size:16px;color:rgba(255,255,255,0.7);margin-bottom:8px}
+.dts{display:flex;justify-content:center;gap:48px;margin-top:40px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.1)}
+.dt{text-align:center}
+.dv{font-size:18px;font-weight:600;color:#00D4FF}
+.dl{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px}
+.ftr{text-align:center;margin-top:40px;color:rgba(255,255,255,0.3);font-size:11px;display:flex;align-items:center;justify-content:center;gap:32px}
+.ftr-t{text-align:center}
+.cid{font-family:monospace;color:rgba(255,255,255,0.2)}
+.qr{display:flex;flex-direction:column;align-items:center;gap:4px}
+.qr svg{width:80px;height:80px}
+.qr-l{font-size:9px;color:rgba(255,255,255,0.3)}
+.actions{text-align:center;margin-top:24px}
+.actions button{font-family:'DM Sans',sans-serif;padding:10px 32px;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;margin:0 8px}
+.btn-print{background:linear-gradient(to right,#00D4FF,#0066FF);color:#fff}
+.btn-print:hover{opacity:0.9}
+@media print{body{background:#fff;padding:0}.cert{width:100%;border-color:#0066FF;page-break-inside:avoid}.actions{display:none!important}}
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="hdr">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="logo-t">NIS2 Utbildning</span>
+    </div>
+    <div class="ttl">Kurscertifikat</div>
+    <div class="sub">NIS2 Cybersäkerhetsutbildning för energisektorn</div>
+    <div class="trk">${trackName}</div>
+  </div>
+  <div class="main">
+    <div class="lbl">Härmed intygas att</div>
+    <div class="nm">${userName}</div>
+    <div class="crs">har genomfört NIS2 Cybersäkerhetsutbildning — ${trackName}</div>
+    <div class="crs">i enlighet med EU:s NIS2-direktiv (2022/2555)</div>
+    <div class="crs">och Cybersäkerhetslagen (2025:1506)</div>
+  </div>
+  <div class="dts">
+    <div class="dt"><div class="dv">${scorePercent}%</div><div class="dl">Provresultat</div></div>
+    <div class="dt"><div class="dv">${cert.examScore}/${cert.totalQuestions}</div><div class="dl">Rätta svar</div></div>
+    <div class="dt"><div class="dv">${dateStr}</div><div class="dl">Utfärdat</div></div>
+  </div>
+  <div class="ftr">
+    <div class="ftr-t">
+      <p>&copy; 2026 Electrab AB</p>
+      <p class="cid" style="margin-top:8px">Certifikat-ID: ${cert.certificateId}</p>
+      <p class="cid" style="margin-top:4px">Verifiera: nis2utbildning.com/#/verify/${cert.certificateId}</p>
+    </div>
+    <div class="qr">
+      ${qrSvg}
+      <span class="qr-l">Skanna för att verifiera</span>
+    </div>
+  </div>
+</div>
+<div class="actions">
+  <button class="btn-print" onclick="window.print()">Skriv ut / Spara som PDF</button>
+</div>
 </body>
-</html>
-    `);
-    printWindow.document.close();
-  };
+</html>`;
+
+    // Use iframe approach for most reliable cross-browser printing
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-9999px";
+    iframe.style.top = "-9999px";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      // Fallback: download as HTML file
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `NIS2-Certifikat-${userName.replace(/\s+/g, "-")}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+
+    // Wait for fonts and content to load, then trigger print
+    iframe.onload = () => {
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.print();
+        } catch {
+          // If iframe print fails, fallback to download
+          const blob = new Blob([html], { type: "text/html" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `NIS2-Certifikat-${userName.replace(/\s+/g, "-")}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+        // Remove iframe after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 500);
+    };
+  }, [user]);
 
   if (isLoading) {
     return (
