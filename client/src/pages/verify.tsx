@@ -78,7 +78,7 @@ function VerifyResult({ certId }: { certId: string }) {
           </p>
           {cert.track && (
             <p className="text-sm font-medium" style={{ color: cert.track === 1 ? "#00D4FF" : "#0066FF" }}>
-              {cert.track === 1 ? "Track 1: Ledning & Styrelse" : "Track 2: All Personal"}
+              {cert.track === 1 ? "Spår 1: Ledning & Styrelse" : "Spår 2: All Personal"}
             </p>
           )}
         </CardContent>
@@ -114,7 +114,7 @@ function VerifyResult({ certId }: { certId: string }) {
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Utbildning</p>
               <p className="font-medium">
                 NIS2 Cybersäkerhetsutbildning för energisektorn
-                {cert.track && ` — ${cert.track === 1 ? "Ledning & Styrelse" : "All Personal"}`}
+                {cert.track && ` — ${cert.track === 1 ? "Spår 1: Ledning & Styrelse" : "Spår 2: All Personal"}`}
               </p>
               <p className="text-sm text-muted-foreground">
                 I enlighet med EU:s NIS2-direktiv (2022/2555) och Cybersäkerhetslagen (2025:1506)

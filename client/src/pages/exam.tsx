@@ -23,7 +23,8 @@ interface Answer {
 }
 
 interface TrackConfig {
-  domain: number;
+  track: number; // 1 or 2 — matches DB track column
+  domains: number[]; // which domain IDs to pull questions from
   questionCount: number;
   timeSeconds: number;
   title: string;
@@ -31,19 +32,23 @@ interface TrackConfig {
   color: string;
 }
 
+// Track 1 (Ledning) = gemensam (domain 0) + ledning (domain 1)
+// Track 2 (Personal) = gemensam (domain 0) + personal (domain 2)
 const TRACK_CONFIGS: Record<number, TrackConfig> = {
   1: {
-    domain: 1,
-    questionCount: 15,
-    timeSeconds: 30 * 60,
+    track: 1,
+    domains: [0, 1],
+    questionCount: 20,
+    timeSeconds: 40 * 60,
     title: "Ledning & Styrelse",
     shortTitle: "Ledning & Styrelse",
     color: "#00D4FF",
   },
   2: {
-    domain: 2,
-    questionCount: 20,
-    timeSeconds: 40 * 60,
+    track: 2,
+    domains: [0, 2],
+    questionCount: 25,
+    timeSeconds: 50 * 60,
     title: "All Personal",
     shortTitle: "All Personal",
     color: "#0066FF",
@@ -164,7 +169,8 @@ export default function ExamPage() {
 
   const startExam = (track: number) => {
     const config = TRACK_CONFIGS[track];
-    const filtered = allQuestions.filter((q) => q.domain === config.domain);
+    // Pull from all domains the track covers
+    const filtered = allQuestions.filter((q) => config.domains.includes(q.domain));
     const shuffled = shuffleArray(filtered);
     const count = Math.min(config.questionCount, shuffled.length);
     const selected = shuffled.slice(0, count);
@@ -211,25 +217,27 @@ export default function ExamPage() {
   const isPass = scorePercent >= 70;
 
   const trackConfig = selectedTrack ? TRACK_CONFIGS[selectedTrack] : null;
-  const passingCount = trackConfig ? Math.ceil(trackConfig.questionCount * 0.7) : 0;
 
   const domainBreakdown = useMemo(() => {
     if (!selectedTrack) return [];
-    const domain = domainData.find(d => d.id === selectedTrack);
-    if (!domain) return [];
-    const domainAnswers = answers.filter(
-      (a) => questions[a.questionIndex]?.domain === domain.id
-    );
-    const total = domainAnswers.length;
-    const correct = domainAnswers.filter((a) => a.correct).length;
-    return [{
-      name: `Track ${domain.numeral}`,
-      shortName: domain.shortTitle,
-      correct,
-      total,
-      percent: total > 0 ? Math.round((correct / total) * 100) : 0,
-      color: domain.color,
-    }];
+    const config = TRACK_CONFIGS[selectedTrack];
+    return config.domains.map(domainId => {
+      const domain = domainData.find(d => d.id === domainId);
+      if (!domain) return null;
+      const domainAnswers = answers.filter(
+        (a) => questions[a.questionIndex]?.domain === domainId
+      );
+      const total = domainAnswers.length;
+      const correct = domainAnswers.filter((a) => a.correct).length;
+      return {
+        name: domain.shortTitle,
+        shortName: domain.shortTitle,
+        correct,
+        total,
+        percent: total > 0 ? Math.round((correct / total) * 100) : 0,
+        color: domain.color,
+      };
+    }).filter(Boolean) as any[];
   }, [answers, questions, selectedTrack]);
 
   const handleSaveResults = async () => {
@@ -239,7 +247,7 @@ export default function ExamPage() {
       if (q) answersMap[q.subtopic] = a.selectedOption;
     });
     await saveResultFn({
-      domains: [selectedTrack],
+      domains: trackConfig ? trackConfig.domains : [],
       totalQuestions: questions.length,
       correctAnswers: correctCount,
       answers: answersMap,
@@ -280,6 +288,7 @@ export default function ExamPage() {
 
         <p className="text-muted-foreground">
           Välj vilket spår du vill göra slutprov för. Varje spår har sitt eget prov och certifikat.
+          Slutprovet innehåller frågor från den gemensamma introduktionen samt spårspecifika avsnitt.
         </p>
 
         {/* Track 1 Card */}
@@ -297,7 +306,7 @@ export default function ExamPage() {
                   <h3 className="font-semibold text-lg">Ledning & Styrelse</h3>
                   {track1Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                 </div>
-                <p className="text-sm text-muted-foreground">Track 1 — 15 frågor, 30 minuter, 70% för godkänt</p>
+                <p className="text-sm text-muted-foreground">Gemensam + Ledning — 20 frågor, 40 minuter, 70% för godkänt</p>
                 {track1Cert && (
                   <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                     Certifikat utfärdat — {Math.round((track1Cert.examScore / track1Cert.totalQuestions) * 100)}%
@@ -309,7 +318,7 @@ export default function ExamPage() {
                   className="shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   onClick={(e) => { e.stopPropagation(); startExam(1); }}
                 >
-                  Starta prov
+                  Påbörja slutprov
                 </Button>
               )}
               {track1Cert && (
@@ -337,7 +346,7 @@ export default function ExamPage() {
                   <h3 className="font-semibold text-lg">All Personal</h3>
                   {track2Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                 </div>
-                <p className="text-sm text-muted-foreground">Track 2 — 20 frågor, 40 minuter, 70% för godkänt</p>
+                <p className="text-sm text-muted-foreground">Gemensam + Personal — 25 frågor, 50 minuter, 70% för godkänt</p>
                 {track2Cert && (
                   <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                     Certifikat utfärdat — {Math.round((track2Cert.examScore / track2Cert.totalQuestions) * 100)}%
@@ -349,7 +358,7 @@ export default function ExamPage() {
                   className="shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   onClick={(e) => { e.stopPropagation(); startExam(2); }}
                 >
-                  Starta prov
+                  Påbörja slutprov
                 </Button>
               )}
               {track2Cert && (
@@ -384,6 +393,10 @@ export default function ExamPage() {
               <li className="flex items-start gap-3">
                 <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">4</span>
                 <span>Varje spår ger ett separat certifikat</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">5</span>
+                <span>Provet innehåller frågor från gemensamma avsnitt + spårets avsnitt</span>
               </li>
             </ul>
           </CardContent>
@@ -517,7 +530,7 @@ export default function ExamPage() {
         {domainBreakdown.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Resultat — {trackConfig.shortTitle}</CardTitle>
+              <CardTitle className="text-base">Resultat per del</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-48" data-testid="exam-domain-chart">

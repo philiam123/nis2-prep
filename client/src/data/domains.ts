@@ -17,17 +17,17 @@ export interface Domain {
 
 export const domainData: Domain[] = [
   {
-    id: 1,
-    numeral: "1",
-    title: "Track 1: Ledning & Styrelse",
-    shortTitle: "Ledning & Styrelse",
-    questions: "~30 min",
-    icon: "shield",
-    color: "#00D4FF",
+    id: 0,
+    numeral: "0",
+    title: "Gemensam introduktion",
+    shortTitle: "Gemensam",
+    questions: "~60 min",
+    icon: "book-open",
+    color: "#10B981",
     chapters: [
       {
-        id: "M1",
-        title: "Modul 1: Vad är NIS2?",
+        id: "A1",
+        title: "Avsnitt 1: Vad är NIS2?",
         content: `
           <div class="concept-block">
             <h4>EU:s nya cybersäkerhetsdirektiv</h4>
@@ -64,8 +64,8 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "M2",
-        title: "Modul 2: Omfattas vi?",
+        id: "A2",
+        title: "Avsnitt 2: Omfattas vi?",
         content: `
           <div class="concept-block">
             <h4>Energisektorn i NIS2</h4>
@@ -127,49 +127,8 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "M3",
-        title: "Modul 3: Ledningens ansvar",
-        content: `
-          <div class="concept-block">
-            <h4>Artikel 20: Ledningens skyldigheter</h4>
-            <p>NIS2 är tydligt: cybersäkerhet är en ledningsfråga, inte bara en IT-fråga. Artikel 20 fastställer att:</p>
-            <ul>
-              <li>Ledningen <strong>MÅSTE</strong> godkänna de cybersäkerhetsåtgärder som organisationen vidtar</li>
-              <li>Ledningen <strong>MÅSTE</strong> övervaka genomförandet av åtgärderna</li>
-              <li>Ledningen kan hållas <strong>personligt ansvarig</strong> vid bristande efterlevnad</li>
-              <li>Ledningen <strong>SKA</strong> genomgå utbildning om cybersäkerhetsrisker och åtgärder</li>
-            </ul>
-          </div>
-
-          <div class="concept-block">
-            <h4>Cybersäkerhetslagen 4 §</h4>
-            <p>Den svenska Cybersäkerhetslagen (2025:1506) förtydligar i 4 § att:</p>
-            <ul>
-              <li>Ledningen i verksamhetsutövare ska genomgå utbildning om riskhanteringsåtgärder för cybersäkerhet</li>
-              <li>Utbildningen ska ge tillräcklig kunskap för att identifiera risker och bedöma cybersäkerhetsåtgärder</li>
-              <li>Alla anställda ska erbjudas regelbunden cybersäkerhetsutbildning</li>
-            </ul>
-          </div>
-
-          <div class="concept-block">
-            <h4>Sanktioner</h4>
-            <p>NIS2 inför betydligt hårdare sanktioner jämfört med NIS1:</p>
-            <ul>
-              <li><strong>Väsentliga verksamheter:</strong> Böter upp till 10 MEUR eller 2% av global omsättning (det högsta beloppet gäller)</li>
-              <li><strong>Viktiga verksamheter:</strong> Böter upp till 7 MEUR eller 1,4% av global omsättning</li>
-              <li><strong>Personligt ansvar:</strong> Ledningen kan tillfälligt förbjudas att utöva ledningsfunktioner</li>
-              <li><strong>Offentliggörande:</strong> Tillsynsmyndigheten kan offentliggöra vilka organisationer som brister</li>
-            </ul>
-          </div>
-
-          <div class="exam-tip">
-            <strong>Praktiskt:</strong> Som ledningsperson bör du: (1) Upprätta en formell cybersäkerhetspolicy, (2) Utse en cybersäkerhetsansvarig (CISO eller motsvarande), (3) Budgetera tillräckliga resurser för cybersäkerhet, (4) Genomgå utbildning (som denna!), (5) Regelbundet granska cybersäkerhetsrapporter.
-          </div>
-        `,
-      },
-      {
-        id: "M4",
-        title: "Modul 4: De 10 säkerhetsåtgärderna",
+        id: "A3",
+        title: "Avsnitt 3: De 10 säkerhetsåtgärderna",
         content: `
           <div class="concept-block">
             <h4>Artikel 21: Riskhanteringsåtgärder</h4>
@@ -232,58 +191,8 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "M5",
-        title: "Modul 5: Incidentrapportering",
-        content: `
-          <div class="concept-block">
-            <h4>Strikta tidsfrister</h4>
-            <p>NIS2 inför strikta tidsfrister för rapportering av betydande cybersäkerhetsincidenter:</p>
-            <ul>
-              <li><strong>Inom 24 timmar:</strong> Tidig varning till tillsynsmyndigheten. Ska ange om incidenten misstänks vara orsakad av olagliga handlingar och om den kan ha gränsöverskridande påverkan.</li>
-              <li><strong>Inom 72 timmar:</strong> Fullständig incidentanmälan med en initial bedömning av incidentens allvarlighetsgrad och påverkan, samt eventuella indikatorer på kompromettering (IoC).</li>
-              <li><strong>Inom 1 månad:</strong> Slutrapport med detaljerad analys av incidenten, dess grundorsak, vidtagna åtgärder och lärdomar.</li>
-            </ul>
-          </div>
-
-          <div class="concept-block">
-            <h4>Vem rapporterar till vem?</h4>
-            <p>I Sverige är Myndigheten för samhällsskydd och beredskap (MSB) nationell kontaktpunkt. Beroende på sektor kan tillsynsmyndigheten vara:</p>
-            <ul>
-              <li><strong>Energisektorn:</strong> Energimyndigheten (tillsynsmyndighet), rapportering via MSB:s incidentrapporteringssystem</li>
-              <li><strong>CERT-SE:</strong> Sveriges nationella CSIRT (Computer Security Incident Response Team) för teknisk hantering</li>
-              <li><strong>Viktigt:</strong> Rapportering ska ske till tillsynsmyndigheten, som i sin tur samordnar med CERT-SE</li>
-            </ul>
-          </div>
-
-          <div class="concept-block">
-            <h4>Vad är en "betydande incident"?</h4>
-            <p>En incident anses vara betydande om den:</p>
-            <ul>
-              <li>Har orsakat eller kan orsaka allvarliga driftstörningar eller ekonomisk skada</li>
-              <li>Har påverkat eller kan påverka andra fysiska eller juridiska personer genom att orsaka betydande materiell eller immateriell skada</li>
-              <li>Drabbar konfidentialitet, integritet eller tillgänglighet på ett väsentligt sätt</li>
-            </ul>
-          </div>
-
-          <div class="exam-tip">
-            <strong>Dokumentation:</strong> Logga ALLA incidenter, även mindre sådana som inte uppfyller tröskeln för rapportering. God dokumentation visar tillsynsmyndigheten att ni har kontroll och hjälper er att upptäcka mönster och trender.
-          </div>
-        `,
-      },
-    ],
-  },
-  {
-    id: 2,
-    numeral: "2",
-    title: "Track 2: All Personal",
-    shortTitle: "All Personal",
-    questions: "~60-90 min",
-    icon: "users",
-    color: "#0066FF",
-    chapters: [
-      {
-        id: "M6",
-        title: "Modul 6: Cyberhot i energisektorn",
+        id: "A4",
+        title: "Avsnitt 4: Cyberhot i energisektorn",
         content: `
           <div class="concept-block">
             <h4>Ransomware — det största hotet</h4>
@@ -321,54 +230,151 @@ export const domainData: Domain[] = [
           </div>
         `,
       },
+    ],
+  },
+  {
+    id: 1,
+    numeral: "1",
+    title: "Spår 1: Ledning & Styrelse",
+    shortTitle: "Ledning & Styrelse",
+    questions: "~45 min",
+    icon: "shield",
+    color: "#00D4FF",
+    chapters: [
       {
-        id: "M7",
-        title: "Modul 7: IT vs OT-säkerhet",
+        id: "A5",
+        title: "Avsnitt 5: Ledningens ansvar",
         content: `
           <div class="concept-block">
-            <h4>IT = Informationsteknik</h4>
-            <p>IT-system hanterar data och information:</p>
+            <h4>Artikel 20: Ledningens skyldigheter</h4>
+            <p>NIS2 är tydligt: cybersäkerhet är en ledningsfråga, inte bara en IT-fråga. Artikel 20 fastställer att:</p>
             <ul>
-              <li>Datorer, servrar, nätverk, e-post, affärssystem</li>
-              <li><strong>Prioritet:</strong> Konfidentialitet (skydda data)</li>
-              <li>Livslängd: 3-5 år typiskt</li>
-              <li>Uppdateringar: regelbundna patchar och uppdateringar</li>
+              <li>Ledningen <strong>MÅSTE</strong> godkänna de cybersäkerhetsåtgärder som organisationen vidtar</li>
+              <li>Ledningen <strong>MÅSTE</strong> övervaka genomförandet av åtgärderna</li>
+              <li>Ledningen kan hållas <strong>personligt ansvarig</strong> vid bristande efterlevnad</li>
+              <li>Ledningen <strong>SKA</strong> genomgå utbildning om cybersäkerhetsrisker och åtgärder</li>
             </ul>
           </div>
 
           <div class="concept-block">
-            <h4>OT = Operativ Teknik</h4>
-            <p>OT-system styr fysiska processer:</p>
+            <h4>Cybersäkerhetslagen 4 §</h4>
+            <p>Den svenska Cybersäkerhetslagen (2025:1506) förtydligar i 4 § att:</p>
             <ul>
-              <li><strong>SCADA:</strong> Supervisory Control and Data Acquisition — övervakar och styr industriella processer</li>
-              <li><strong>PLC:</strong> Programmable Logic Controller — styr enskilda maskiner</li>
-              <li><strong>RTU:</strong> Remote Terminal Unit — fjärrstyrning av fältutrustning</li>
-              <li><strong>HMI:</strong> Human-Machine Interface — operatörens gränssnitt</li>
-              <li><strong>Prioritet:</strong> Tillgänglighet (systemet måste fungera)</li>
-              <li>Livslängd: 15-30 år</li>
-              <li>Äldre protokoll: Modbus, DNP3, IEC 61850</li>
+              <li>Ledningen i verksamhetsutövare ska genomgå utbildning om riskhanteringsåtgärder för cybersäkerhet</li>
+              <li>Utbildningen ska ge tillräcklig kunskap för att identifiera risker och bedöma cybersäkerhetsåtgärder</li>
+              <li>Alla anställda ska erbjudas regelbunden cybersäkerhetsutbildning</li>
             </ul>
           </div>
 
           <div class="concept-block">
-            <h4>IT/OT-konvergens</h4>
-            <p>Traditionellt var IT och OT separata världar. Idag kopplas de ihop, vilket skapar nya risker:</p>
+            <h4>Sanktioner</h4>
+            <p>NIS2 inför betydligt hårdare sanktioner jämfört med NIS1:</p>
             <ul>
-              <li>Fjärrstyrning av OT via IT-nätverk möjliggör effektivitet men öppnar nya attackvägar</li>
-              <li>Traditionell IT-säkerhet räcker inte för OT — t.ex. kan man inte alltid starta om ett SCADA-system</li>
-              <li><strong>IEC 62443:</strong> International standard för industriell cybersäkerhet</li>
-              <li><strong>Purdue-modellen:</strong> Segmentering av nätverk i nivåer för att separera IT och OT</li>
+              <li><strong>Väsentliga verksamheter:</strong> Böter upp till 10 MEUR eller 2% av global omsättning (det högsta beloppet gäller)</li>
+              <li><strong>Viktiga verksamheter:</strong> Böter upp till 7 MEUR eller 1,4% av global omsättning</li>
+              <li><strong>Personligt ansvar:</strong> Ledningen kan tillfälligt förbjudas att utöva ledningsfunktioner</li>
+              <li><strong>Offentliggörande:</strong> Tillsynsmyndigheten kan offentliggöra vilka organisationer som brister</li>
             </ul>
           </div>
 
-          <div class="key-takeaway">
-            <strong>Kom ihåg:</strong> I OT-världen prioriteras tillgänglighet och säkerhet (safety) framför konfidentialitet. En patch som kräver omstart av ett SCADA-system kan vara omöjlig att applicera under drift. IT- och OT-team måste samarbeta men förstå varandras prioriteringar.
+          <div class="exam-tip">
+            <strong>Praktiskt:</strong> Som ledningsperson bör du: (1) Upprätta en formell cybersäkerhetspolicy, (2) Utse en cybersäkerhetsansvarig (CISO eller motsvarande), (3) Budgetera tillräckliga resurser för cybersäkerhet, (4) Genomgå utbildning (som denna!), (5) Regelbundet granska cybersäkerhetsrapporter.
           </div>
         `,
       },
       {
-        id: "M8",
-        title: "Modul 8: Lösenord och autentisering",
+        id: "A6",
+        title: "Avsnitt 6: Incidentrapportering",
+        content: `
+          <div class="concept-block">
+            <h4>Strikta tidsfrister</h4>
+            <p>NIS2 inför strikta tidsfrister för rapportering av betydande cybersäkerhetsincidenter:</p>
+            <ul>
+              <li><strong>Inom 24 timmar:</strong> Tidig varning till tillsynsmyndigheten. Ska ange om incidenten misstänks vara orsakad av olagliga handlingar och om den kan ha gränsöverskridande påverkan.</li>
+              <li><strong>Inom 72 timmar:</strong> Fullständig incidentanmälan med en initial bedömning av incidentens allvarlighetsgrad och påverkan, samt eventuella indikatorer på kompromettering (IoC).</li>
+              <li><strong>Inom 1 månad:</strong> Slutrapport med detaljerad analys av incidenten, dess grundorsak, vidtagna åtgärder och lärdomar.</li>
+            </ul>
+          </div>
+
+          <div class="concept-block">
+            <h4>Vem rapporterar till vem?</h4>
+            <p>I Sverige är Myndigheten för samhällsskydd och beredskap (MSB) nationell kontaktpunkt. Beroende på sektor kan tillsynsmyndigheten vara:</p>
+            <ul>
+              <li><strong>Energisektorn:</strong> Energimyndigheten (tillsynsmyndighet), rapportering via MSB:s incidentrapporteringssystem</li>
+              <li><strong>CERT-SE:</strong> Sveriges nationella CSIRT (Computer Security Incident Response Team) för teknisk hantering</li>
+              <li><strong>Viktigt:</strong> Rapportering ska ske till tillsynsmyndigheten, som i sin tur samordnar med CERT-SE</li>
+            </ul>
+          </div>
+
+          <div class="concept-block">
+            <h4>Vad är en "betydande incident"?</h4>
+            <p>En incident anses vara betydande om den:</p>
+            <ul>
+              <li>Har orsakat eller kan orsaka allvarliga driftstörningar eller ekonomisk skada</li>
+              <li>Har påverkat eller kan påverka andra fysiska eller juridiska personer genom att orsaka betydande materiell eller immateriell skada</li>
+              <li>Drabbar konfidentialitet, integritet eller tillgänglighet på ett väsentligt sätt</li>
+            </ul>
+          </div>
+
+          <div class="exam-tip">
+            <strong>Dokumentation:</strong> Logga ALLA incidenter, även mindre sådana som inte uppfyller tröskeln för rapportering. God dokumentation visar tillsynsmyndigheten att ni har kontroll och hjälper er att upptäcka mönster och trender.
+          </div>
+        `,
+      },
+      {
+        id: "A7",
+        title: "Avsnitt 7: Leverantörs- och supply chain-säkerhet",
+        content: `
+          <div class="concept-block">
+            <h4>NIS2 artikel 21(d)</h4>
+            <p>Säkerhet i leverantörskedjan är ett obligatoriskt krav i NIS2. Organisationer måste:</p>
+            <ul>
+              <li>Identifiera och bedöma cybersäkerhetsrisker i sin leverantörskedja</li>
+              <li>Ställa cybersäkerhetskrav på leverantörer och underleverantörer</li>
+              <li>Säkerställa att leverantörer uppfyller avtalade säkerhetskrav</li>
+              <li>Regelbundet granska leverantörers säkerhet</li>
+            </ul>
+          </div>
+
+          <div class="concept-block">
+            <h4>Supply chain-attacker</h4>
+            <p>Några av de mest förödande cyberattackerna har gått via leverantörskedjan:</p>
+            <ul>
+              <li><strong>SolarWinds (2020):</strong> Angripare komprometterade en mjukvaruuppdatering som distribuerades till 18 000 organisationer, inklusive amerikanska myndigheter</li>
+              <li><strong>Kaseya (2021):</strong> Ransomware distribuerades via IT-managementprogramvara och drabbade 1 500+ företag</li>
+              <li><strong>Kostnad:</strong> Supply chain-attacker beräknas kosta 138 miljarder USD per år globalt till 2031</li>
+            </ul>
+          </div>
+
+          <div class="concept-block">
+            <h4>Praktiska åtgärder</h4>
+            <ul>
+              <li><strong>Riskbedömning:</strong> Klassificera leverantörer efter risk (kritiska vs icke-kritiska)</li>
+              <li><strong>Kontraktuella krav:</strong> Inkludera cybersäkerhetskrav, rätt till revision och incidentrapporteringsklausuler i avtal</li>
+              <li><strong>Fjärråtkomst:</strong> Leverantörer med fjärråtkomst till era system kräver extra övervakning — VPN, tidsbegränsade sessioner, loggning</li>
+              <li><strong>Tredjepartskontroller:</strong> Begär certifieringar (ISO 27001) och genomför regelbundna granskningar</li>
+            </ul>
+          </div>
+
+          <div class="key-takeaway">
+            <strong>Energisektorn:</strong> Elkraftsentreprenörer och underleverantörer med fjärråtkomst till SCADA-system och stationsutrustning utgör särskilda risker. Varje leverantör med åtkomst till era kritiska system bör behandlas som en förlängning av er egen organisation.
+          </div>
+        `,
+      },
+    ],
+  },
+  {
+    id: 2,
+    numeral: "2",
+    title: "Spår 2: All Personal",
+    shortTitle: "All Personal",
+    questions: "~60 min",
+    icon: "users",
+    color: "#0066FF",
+    chapters: [
+      {
+        id: "A5",
+        title: "Avsnitt 5: Lösenord och autentisering",
         content: `
           <div class="concept-block">
             <h4>Starka lösenord</h4>
@@ -414,8 +420,8 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "M9",
-        title: "Modul 9: Phishing och social engineering",
+        id: "A6",
+        title: "Avsnitt 6: Phishing och social engineering",
         content: `
           <div class="concept-block">
             <h4>Vad är phishing?</h4>
@@ -459,8 +465,8 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "M10",
-        title: "Modul 10: Incidenthantering i praktiken",
+        id: "A7",
+        title: "Avsnitt 7: Incidenthantering i praktiken",
         content: `
           <div class="concept-block">
             <h4>Vad är en incident?</h4>
@@ -502,49 +508,49 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "M11",
-        title: "Modul 11: Leverantörs- och supply chain-säkerhet",
+        id: "A8",
+        title: "Avsnitt 8: IT/OT, fysisk säkerhet & kryptografi",
         content: `
           <div class="concept-block">
-            <h4>NIS2 artikel 21(d)</h4>
-            <p>Säkerhet i leverantörskedjan är ett obligatoriskt krav i NIS2. Organisationer måste:</p>
+            <h4>IT = Informationsteknik</h4>
+            <p>IT-system hanterar data och information:</p>
             <ul>
-              <li>Identifiera och bedöma cybersäkerhetsrisker i sin leverantörskedja</li>
-              <li>Ställa cybersäkerhetskrav på leverantörer och underleverantörer</li>
-              <li>Säkerställa att leverantörer uppfyller avtalade säkerhetskrav</li>
-              <li>Regelbundet granska leverantörers säkerhet</li>
+              <li>Datorer, servrar, nätverk, e-post, affärssystem</li>
+              <li><strong>Prioritet:</strong> Konfidentialitet (skydda data)</li>
+              <li>Livslängd: 3-5 år typiskt</li>
+              <li>Uppdateringar: regelbundna patchar och uppdateringar</li>
             </ul>
           </div>
 
           <div class="concept-block">
-            <h4>Supply chain-attacker</h4>
-            <p>Några av de mest förödande cyberattackerna har gått via leverantörskedjan:</p>
+            <h4>OT = Operativ Teknik</h4>
+            <p>OT-system styr fysiska processer:</p>
             <ul>
-              <li><strong>SolarWinds (2020):</strong> Angripare komprometterade en mjukvaruuppdatering som distribuerades till 18 000 organisationer, inklusive amerikanska myndigheter</li>
-              <li><strong>Kaseya (2021):</strong> Ransomware distribuerades via IT-managementprogramvara och drabbade 1 500+ företag</li>
-              <li><strong>Kostnad:</strong> Supply chain-attacker beräknas kosta 138 miljarder USD per år globalt till 2031</li>
+              <li><strong>SCADA:</strong> Supervisory Control and Data Acquisition — övervakar och styr industriella processer</li>
+              <li><strong>PLC:</strong> Programmable Logic Controller — styr enskilda maskiner</li>
+              <li><strong>RTU:</strong> Remote Terminal Unit — fjärrstyrning av fältutrustning</li>
+              <li><strong>HMI:</strong> Human-Machine Interface — operatörens gränssnitt</li>
+              <li><strong>Prioritet:</strong> Tillgänglighet (systemet måste fungera)</li>
+              <li>Livslängd: 15-30 år</li>
+              <li>Äldre protokoll: Modbus, DNP3, IEC 61850</li>
             </ul>
           </div>
 
           <div class="concept-block">
-            <h4>Praktiska åtgärder</h4>
+            <h4>IT/OT-konvergens</h4>
+            <p>Traditionellt var IT och OT separata världar. Idag kopplas de ihop, vilket skapar nya risker:</p>
             <ul>
-              <li><strong>Riskbedömning:</strong> Klassificera leverantörer efter risk (kritiska vs icke-kritiska)</li>
-              <li><strong>Kontraktuella krav:</strong> Inkludera cybersäkerhetskrav, rätt till revision och incidentrapporteringsklausuler i avtal</li>
-              <li><strong>Fjärråtkomst:</strong> Leverantörer med fjärråtkomst till era system kräver extra övervakning — VPN, tidsbegränsade sessioner, loggning</li>
-              <li><strong>Tredjepartskontroller:</strong> Begär certifieringar (ISO 27001) och genomför regelbundna granskningar</li>
+              <li>Fjärrstyrning av OT via IT-nätverk möjliggör effektivitet men öppnar nya attackvägar</li>
+              <li>Traditionell IT-säkerhet räcker inte för OT — t.ex. kan man inte alltid starta om ett SCADA-system</li>
+              <li><strong>IEC 62443:</strong> International standard för industriell cybersäkerhet</li>
+              <li><strong>Purdue-modellen:</strong> Segmentering av nätverk i nivåer för att separera IT och OT</li>
             </ul>
           </div>
 
           <div class="key-takeaway">
-            <strong>Energisektorn:</strong> Elkraftsentreprenörer och underleverantörer med fjärråtkomst till SCADA-system och stationsutrustning utgör särskilda risker. Varje leverantör med åtkomst till era kritiska system bör behandlas som en förlängning av er egen organisation.
+            <strong>Kom ihåg:</strong> I OT-världen prioriteras tillgänglighet och säkerhet (safety) framför konfidentialitet. En patch som kräver omstart av ett SCADA-system kan vara omöjlig att applicera under drift. IT- och OT-team måste samarbeta men förstå varandras prioriteringar.
           </div>
-        `,
-      },
-      {
-        id: "M12",
-        title: "Modul 12: Fysisk säkerhet och OT",
-        content: `
+        
           <div class="concept-block">
             <h4>NIS2:s "all-hazards approach"</h4>
             <p>NIS2 kräver skydd mot alla typer av hot — inte bara digitala utan även fysiska. I energisektorn innebär det:</p>
@@ -580,12 +586,7 @@ export const domainData: Domain[] = [
           <div class="exam-tip">
             <strong>Tänk på:</strong> En angripare som får fysisk tillgång till ett kontrollrum kan göra enorma skador på kort tid. Fysisk säkerhet och cybersäkerhet måste samverka — det räcker inte med den ena utan den andra.
           </div>
-        `,
-      },
-      {
-        id: "M13",
-        title: "Modul 13: Kryptografi och dataskydd",
-        content: `
+        
           <div class="concept-block">
             <h4>Grundläggande kryptering</h4>
             <p>NIS2 artikel 21(h) kräver en kryptografipolicy. Kryptering skyddar data genom att göra den oläslig för obehöriga:</p>

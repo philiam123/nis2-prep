@@ -26,7 +26,7 @@ export default function QuizPage() {
   const [, navigate] = useLocation();
 
   const [screen, setScreen] = useState<Screen>("setup");
-  const [selectedDomains, setSelectedDomains] = useState<number[]>([1, 2]);
+  const [selectedDomains, setSelectedDomains] = useState<number[]>([0, 1, 2]);
   const [practiceCount, setPracticeCount] = useState<number>(10);
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -103,7 +103,7 @@ export default function QuizPage() {
         const total = domainAnswers.length;
         const correct = domainAnswers.filter((a) => a.correct).length;
         return {
-          name: `Track ${domain.numeral}`,
+          name: domain.shortTitle,
           shortName: domain.shortTitle,
           correct,
           total,
@@ -138,7 +138,7 @@ export default function QuizPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Välj spår</CardTitle>
+            <CardTitle className="text-base">Välj kursdelar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {domainData.map((domain) => (
@@ -149,7 +149,7 @@ export default function QuizPage() {
                   data-testid={`quiz-domain-${domain.id}`}
                 />
                 <Label className="text-sm">
-                  Track {domain.numeral}: {domain.shortTitle}
+                  {domain.title}
                 </Label>
               </div>
             ))}
@@ -319,7 +319,7 @@ export default function QuizPage() {
         {domainBreakdown.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Fördelning per spår</CardTitle>
+              <CardTitle className="text-base">Fördelning per del</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64" data-testid="quiz-domain-chart">
@@ -361,7 +361,7 @@ export default function QuizPage() {
               <ul className="space-y-2">
                 {weakAreas.map((area) => (
                   <li key={area.name} className="flex items-center justify-between text-sm">
-                    <span>{area.name}: {area.shortName}</span>
+                    <span>{area.shortName}</span>
                     <span className="text-destructive font-medium">{area.percent}%</span>
                   </li>
                 ))}

@@ -21,6 +21,10 @@ function getTrackName(track: number): string {
   return track === 1 ? "Ledning & Styrelse" : "All Personal";
 }
 
+function getTrackLabel(track: number): string {
+  return track === 1 ? "Spår 1: Ledning & Styrelse" : "Spår 2: All Personal";
+}
+
 function getTrackColor(track: number): string {
   return track === 1 ? "#00D4FF" : "#0066FF";
 }
@@ -137,7 +141,7 @@ function CertificateCard({ cert, user, onPrint }: { cert: CertificateData; user:
               <span className="font-medium">{user?.email}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Spår</span>
+              <span className="text-muted-foreground">Utbildningsspår</span>
               <span className="font-medium" style={{ color: trackColor }}>{trackName}</span>
             </div>
             <div className="flex justify-between">
@@ -339,7 +343,7 @@ export default function CertificatePage() {
         <div className="space-y-2">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Shield className="h-5 w-5" style={{ color: "#00D4FF" }} />
-            Track 1: Ledning & Styrelse
+            Spår 1: Ledning & Styrelse
           </h2>
           <CertificateCard cert={track1Cert} user={user} onPrint={handlePrint} />
         </div>
@@ -349,7 +353,7 @@ export default function CertificatePage() {
         <div className="space-y-2">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" style={{ color: "#0066FF" }} />
-            Track 2: All Personal
+            Spår 2: All Personal
           </h2>
           <CertificateCard cert={track2Cert} user={user} onPrint={handlePrint} />
         </div>
@@ -364,7 +368,7 @@ export default function CertificatePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" style={{ color: "#00D4FF" }} />
-                  <span className="text-sm">Track 1: Ledning & Styrelse</span>
+                  <span className="text-sm">Spår 1: Ledning & Styrelse</span>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => navigate("/exam")}>
                   Gå till slutprov
@@ -375,7 +379,7 @@ export default function CertificatePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" style={{ color: "#0066FF" }} />
-                  <span className="text-sm">Track 2: All Personal</span>
+                  <span className="text-sm">Spår 2: All Personal</span>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => navigate("/exam")}>
                   Gå till slutprov

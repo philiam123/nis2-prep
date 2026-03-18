@@ -25,12 +25,12 @@ export default function DashboardPage() {
     queryKey: ["/api/certificates"],
   });
 
-  // Calculate progress per track
+  // Calculate progress
   const totalChapters = domainData.reduce((sum, d) => sum + d.chapters.length, 0);
   const completedChapters = progress.filter((p: any) => p.completed).length;
   const overallPercent = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
 
-  const trackProgress = domainData.map((domain) => {
+  const domainProgress = domainData.map((domain) => {
     const domainChapterIds = domain.chapters.map((c) => c.id);
     const completed = progress.filter(
       (p: any) => p.completed && domainChapterIds.includes(p.chapterId)
@@ -72,6 +72,12 @@ export default function DashboardPage() {
       isReady: readiness >= 70,
     };
   }, [overallPercent, quizResults]);
+
+  const getDomainIcon = (id: number) => {
+    if (id === 0) return <BookOpen className="h-5 w-5 text-emerald-500" />;
+    if (id === 1) return <Shield className="h-5 w-5" style={{ color: "#00D4FF" }} />;
+    return <Users className="h-5 w-5" style={{ color: "#0066FF" }} />;
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl">
@@ -194,7 +200,7 @@ export default function DashboardPage() {
           </div>
           <p className="text-xs text-muted-foreground">
             Statusen baseras på: kursmaterial (30%), quizresultat (50%) och antal övningar (20%).
-            Mål: 70% för att vara redo. Godkänt slutprov: 70% (18/25).
+            Mål: 70% för att vara redo.
           </p>
         </CardContent>
       </Card>
@@ -208,27 +214,22 @@ export default function DashboardPage() {
           </div>
           <Progress value={overallPercent} className="h-3" data-testid="dashboard-progress-bar" />
           <p className="mt-2 text-xs text-muted-foreground">
-            {completedChapters} av {totalChapters} moduler avklarade
+            {completedChapters} av {totalChapters} avsnitt avklarade
           </p>
         </CardContent>
       </Card>
 
-      {/* Track Cards */}
+      {/* Domain Cards */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Spårframgång</h2>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {trackProgress.map((d) => (
+        <h2 className="text-lg font-semibold mb-3">Framgång per del</h2>
+        <div className="grid sm:grid-cols-3 gap-4">
+          {domainProgress.map((d) => (
             <Card key={d.id} data-testid={`domain-card-${d.id}`} className="border-l-4" style={{ borderLeftColor: d.color }}>
               <CardContent className="pt-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {d.id === 1 ? (
-                      <Shield className="h-5 w-5" style={{ color: d.color }} />
-                    ) : (
-                      <Users className="h-5 w-5" style={{ color: d.color }} />
-                    )}
+                    {getDomainIcon(d.id)}
                     <div>
-                      <p className="text-xs text-muted-foreground">Track {d.numeral}</p>
                       <h3 className="font-semibold text-sm leading-tight">{d.shortTitle}</h3>
                     </div>
                   </div>
@@ -236,7 +237,7 @@ export default function DashboardPage() {
                 </div>
                 <Progress value={d.percent} className="h-2" />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {d.completed}/{d.total} moduler — {d.questions}
+                  {d.completed}/{d.total} avsnitt — {d.questions}
                 </p>
               </CardContent>
             </Card>
@@ -310,14 +311,14 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-bold text-primary">13</p>
-            <p className="text-xs text-muted-foreground">Moduler</p>
+            <p className="text-2xl font-bold text-primary">{totalChapters}</p>
+            <p className="text-xs text-muted-foreground">Avsnitt</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-bold text-primary">2</p>
-            <p className="text-xs text-muted-foreground">Utbildningsspår</p>
+            <p className="text-2xl font-bold text-primary">3</p>
+            <p className="text-xs text-muted-foreground">Kursdelar</p>
           </CardContent>
         </Card>
         <Card>

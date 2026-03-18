@@ -90,7 +90,7 @@ export default function LandingPage() {
             {[
               { value: "+70%", label: "Ökning av cyberattacker mot energisektorn 2024", icon: AlertTriangle },
               { value: "10 MEUR", label: "Böter vid bristande efterlevnad", icon: Lock },
-              { value: "13", label: "Utbildningsmoduler", icon: BookOpen },
+              { value: "11", label: "Utbildningsavsnitt", icon: BookOpen },
               { value: "100+", label: "Quizfrågor med förklaringar", icon: HelpCircle },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
@@ -120,19 +120,21 @@ export default function LandingPage() {
                     <Shield className="h-6 w-6 text-cyan-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg text-white">Track 1: Ledning & Styrelse</h3>
+                    <h3 className="font-bold text-lg text-white">Spår 1: Ledning & Styrelse</h3>
                     <div className="flex items-center gap-2 text-white/50 text-sm">
-                      <Clock className="h-3.5 w-3.5" /> ~30 minuter • 5 moduler
+                      <Clock className="h-3.5 w-3.5" /> ~40 minuter • Gemensam + 3 avsnitt
                     </div>
                   </div>
                 </div>
                 <ul className="space-y-2.5 mb-4">
                   {[
-                    "Vad är NIS2?",
-                    "Omfattas vi?",
+                    "Gemensam: Vad är NIS2?",
+                    "Gemensam: Omfattas vi?",
+                    "Gemensam: De 10 säkerhetsåtgärderna",
+                    "Gemensam: Cyberhot i energisektorn",
                     "Ledningens ansvar",
-                    "De 10 säkerhetsåtgärderna",
                     "Incidentrapportering",
+                    "Leverantörs- och supply chain-säkerhet",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm text-white/70">
                       <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
@@ -153,22 +155,22 @@ export default function LandingPage() {
                     <Users className="h-6 w-6 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg text-white">Track 2: All Personal</h3>
+                    <h3 className="font-bold text-lg text-white">Spår 2: All Personal</h3>
                     <div className="flex items-center gap-2 text-white/50 text-sm">
-                      <Clock className="h-3.5 w-3.5" /> ~60-90 minuter • 8 moduler
+                      <Clock className="h-3.5 w-3.5" /> ~50 minuter • Gemensam + 4 avsnitt
                     </div>
                   </div>
                 </div>
                 <ul className="space-y-2.5 mb-4">
                   {[
-                    "Cyberhot i energisektorn",
-                    "IT vs OT-säkerhet",
+                    "Gemensam: Vad är NIS2?",
+                    "Gemensam: Omfattas vi?",
+                    "Gemensam: De 10 säkerhetsåtgärderna",
+                    "Gemensam: Cyberhot i energisektorn",
                     "Lösenord och autentisering",
                     "Phishing och social engineering",
                     "Incidenthantering i praktiken",
-                    "Leverantörssäkerhet",
-                    "Fysisk säkerhet och OT",
-                    "Kryptografi och dataskydd",
+                    "IT/OT, fysisk säkerhet & kryptografi",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-sm text-white/70">
                       <CheckCircle className="h-4 w-4 text-blue-400 shrink-0" />
@@ -228,12 +230,12 @@ export default function LandingPage() {
               {
                 icon: BookOpen,
                 title: "Interaktivt kursmaterial",
-                desc: "13 moduler med strukturerat innehåll anpassat för energisektorn. Markera avsnitt som klara och följ din progress.",
+                desc: "11 avsnitt med strukturerat innehåll anpassat för energisektorn. Gemensam introduktion + spårspecifika avsnitt. Markera avsnitt som klara och följ din progress.",
               },
               {
                 icon: HelpCircle,
                 title: "100+ quizfrågor",
-                desc: "Öva med modulsorterade frågor eller gör ett fullständigt slutprov med 25 frågor. Detaljerade förklaringar på varje fråga.",
+                desc: "Öva med frågor från alla kursdelar eller gör ett fullständigt slutprov. Detaljerade förklaringar på varje fråga.",
               },
               {
                 icon: Award,
@@ -275,7 +277,7 @@ export default function LandingPage() {
                 <div className="text-white/50 mb-8">Per person. Engångsbetalning.</div>
                 <ul className="text-left mb-8 space-y-3 max-w-xs mx-auto">
                   {[
-                    "13 utbildningsmoduler",
+                    "11 utbildningsavsnitt",
                     "100+ quizfrågor med förklaringar",
                     "Slutprov med certifikat",
                     "Anpassat för energisektorn",
@@ -319,7 +321,7 @@ export default function LandingPage() {
                     "Samlad faktura",
                     "Uppföljning av kursframsteg",
                     "Dedikerad support",
-                    "Skräddarsydda moduler",
+                    "Skräddarsydda avsnitt",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />

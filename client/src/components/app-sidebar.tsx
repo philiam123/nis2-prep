@@ -29,7 +29,7 @@ export function AppSidebar() {
 
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/study", label: "Kursmaterial", icon: BookOpen },
+    { path: "/study", label: "Avsnitt", icon: BookOpen },
     { path: "/quiz", label: "Quiz", icon: HelpCircle },
     { path: "/exam", label: "Slutprov", icon: GraduationCap },
     { path: "/certificate", label: "Certifikat", icon: Award },
