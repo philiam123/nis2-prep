@@ -205,109 +205,105 @@ export default function CertificatePage() {
     try {
       qrSvg = await QRCode.toString(verifyUrl, {
         type: "svg",
-        width: 80,
+        width: 64,
         margin: 1,
         color: { dark: "#22d3ee", light: "#00000000" },
       });
     } catch {
-      qrSvg = `<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="8" fill="rgba(255,255,255,0.1)"/><text x="40" y="40" text-anchor="middle" dominant-baseline="middle" fill="#00D4FF" font-size="7" font-family="monospace">QR</text></svg>`;
+      qrSvg = `<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="6" fill="rgba(255,255,255,0.1)"/><text x="32" y="32" text-anchor="middle" dominant-baseline="middle" fill="#00D4FF" font-size="7" font-family="monospace">QR</text></svg>`;
     }
 
+    // A4 = 210mm x 297mm. We use @page + mm units so it fits exactly on one page.
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NIS2 Certifikat — ${userName} — ${trackName}</title>
+<title>NIS2 Certifikat \u2014 ${userName} \u2014 ${trackName}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
-body{font-family:'DM Sans',sans-serif;background:#0F1729;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px}
-.cert{width:800px;padding:60px;background:linear-gradient(135deg,#0F1729,#1a2744);border:2px solid rgba(0,212,255,0.3);border-radius:16px;color:#fff;position:relative}
-.cert::before{content:'';position:absolute;top:20px;left:20px;right:20px;bottom:20px;border:1px solid rgba(0,212,255,0.1);border-radius:12px;pointer-events:none}
-.hdr{text-align:center;margin-bottom:40px}
-.logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px}
-.logo svg{width:32px;height:32px}
-.logo-t{font-size:18px;font-weight:700;background:linear-gradient(to right,#00D4FF,#0066FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.ttl{font-size:32px;font-weight:700;margin-bottom:8px}
-.sub{color:rgba(255,255,255,0.5);font-size:14px}
-.trk{font-size:16px;font-weight:600;color:${trackColor};margin-top:8px}
-.main{text-align:center;margin:40px 0}
-.lbl{color:rgba(255,255,255,0.4);font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
-.nm{font-size:36px;font-weight:600;background:linear-gradient(to right,#00D4FF,#0066FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:32px}
-.crs{font-size:16px;color:rgba(255,255,255,0.7);margin-bottom:8px}
-.dts{display:flex;justify-content:center;gap:48px;margin-top:40px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.1)}
+@page{size:A4 portrait;margin:0}
+html,body{width:210mm;height:297mm;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:#0F1729;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.page{width:210mm;height:297mm;padding:18mm 20mm;background:linear-gradient(135deg,#0F1729,#1a2744);color:#fff;position:relative;display:flex;flex-direction:column;justify-content:center}
+.page::before{content:'';position:absolute;top:12mm;left:12mm;right:12mm;bottom:12mm;border:1px solid rgba(0,212,255,0.15);border-radius:8px;pointer-events:none}
+.hdr{text-align:center;margin-bottom:24px}
+.logo{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px}
+.logo svg{width:26px;height:26px}
+.logo-t{font-size:15px;font-weight:700;background:linear-gradient(to right,#00D4FF,#0066FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ttl{font-size:28px;font-weight:700;margin-bottom:4px}
+.sub{color:rgba(255,255,255,0.5);font-size:12px}
+.trk{font-size:13px;font-weight:600;color:${trackColor};margin-top:6px}
+.main{text-align:center;margin:28px 0}
+.lbl{color:rgba(255,255,255,0.4);font-size:10px;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.nm{font-size:30px;font-weight:600;background:linear-gradient(to right,#00D4FF,#0066FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
+.crs{font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:6px}
+.dts{display:flex;justify-content:center;gap:40px;margin-top:28px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.1)}
 .dt{text-align:center}
-.dv{font-size:18px;font-weight:600;color:#00D4FF}
-.dl{font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px}
-.ftr{text-align:center;margin-top:40px;color:rgba(255,255,255,0.3);font-size:11px;display:flex;align-items:center;justify-content:center;gap:32px}
+.dv{font-size:16px;font-weight:600;color:#00D4FF}
+.dl{font-size:9px;color:rgba(255,255,255,0.4);margin-top:3px}
+.ftr{text-align:center;margin-top:28px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);font-size:10px;display:flex;align-items:center;justify-content:center;gap:24px}
 .ftr-t{text-align:center}
-.cid{font-family:monospace;color:rgba(255,255,255,0.2)}
-.qr{display:flex;flex-direction:column;align-items:center;gap:4px}
-.qr svg{width:80px;height:80px}
-.qr-l{font-size:9px;color:rgba(255,255,255,0.3)}
-.actions{text-align:center;margin-top:24px}
-.actions button{font-family:'DM Sans',sans-serif;padding:10px 32px;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;margin:0 8px}
-.btn-print{background:linear-gradient(to right,#00D4FF,#0066FF);color:#fff}
-.btn-print:hover{opacity:0.9}
-@media print{body{background:#fff;padding:0}.cert{width:100%;border-color:#0066FF;page-break-inside:avoid}.actions{display:none!important}}
+.cid{font-family:monospace;color:rgba(255,255,255,0.2);font-size:9px}
+.qr{display:flex;flex-direction:column;align-items:center;gap:3px}
+.qr svg{width:64px;height:64px}
+.qr-l{font-size:8px;color:rgba(255,255,255,0.3)}
+.actions{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10}
+.actions button{font-family:'DM Sans',sans-serif;padding:10px 32px;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer}
+.btn-dl{background:linear-gradient(to right,#00D4FF,#0066FF);color:#fff}
+.btn-dl:hover{opacity:0.9}
+@media print{.actions{display:none!important}body{background:#0F1729}}
 </style>
 </head>
 <body>
-<div class="cert">
+<div class="page">
   <div class="hdr">
     <div class="logo">
       <svg viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       <span class="logo-t">NIS2 Utbildning</span>
     </div>
     <div class="ttl">Kurscertifikat</div>
-    <div class="sub">NIS2 Cybersäkerhetsutbildning för energisektorn</div>
+    <div class="sub">NIS2 Cybers\u00e4kerhetsutbildning f\u00f6r energisektorn</div>
     <div class="trk">${trackName}</div>
   </div>
   <div class="main">
-    <div class="lbl">Härmed intygas att</div>
+    <div class="lbl">H\u00e4rmed intygas att</div>
     <div class="nm">${userName}</div>
-    <div class="crs">har genomfört NIS2 Cybersäkerhetsutbildning — ${trackName}</div>
+    <div class="crs">har genomf\u00f6rt NIS2 Cybers\u00e4kerhetsutbildning \u2014 ${trackName}</div>
     <div class="crs">i enlighet med EU:s NIS2-direktiv (2022/2555)</div>
-    <div class="crs">och Cybersäkerhetslagen (2025:1506)</div>
+    <div class="crs">och Cybers\u00e4kerhetslagen (2025:1506)</div>
   </div>
   <div class="dts">
     <div class="dt"><div class="dv">${scorePercent}%</div><div class="dl">Provresultat</div></div>
-    <div class="dt"><div class="dv">${cert.examScore}/${cert.totalQuestions}</div><div class="dl">Rätta svar</div></div>
-    <div class="dt"><div class="dv">${dateStr}</div><div class="dl">Utfärdat</div></div>
+    <div class="dt"><div class="dv">${cert.examScore}/${cert.totalQuestions}</div><div class="dl">R\u00e4tta svar</div></div>
+    <div class="dt"><div class="dv">${dateStr}</div><div class="dl">Utf\u00e4rdat</div></div>
   </div>
   <div class="ftr">
     <div class="ftr-t">
       <p>&copy; 2026 Electrab AB</p>
-      <p class="cid" style="margin-top:8px">Certifikat-ID: ${cert.certificateId}</p>
-      <p class="cid" style="margin-top:4px">Verifiera: nis2utbildning.com/#/verify/${cert.certificateId}</p>
+      <p class="cid" style="margin-top:6px">Certifikat-ID: ${cert.certificateId}</p>
+      <p class="cid" style="margin-top:3px">Verifiera: nis2utbildning.com/#/verify/${cert.certificateId}</p>
     </div>
     <div class="qr">
       ${qrSvg}
-      <span class="qr-l">Skanna för att verifiera</span>
+      <span class="qr-l">Skanna f\u00f6r att verifiera</span>
     </div>
   </div>
 </div>
 <div class="actions">
-  <button class="btn-print" onclick="window.print()">Skriv ut / Spara som PDF</button>
+  <button class="btn-dl" onclick="window.print()">Skriv ut / Spara som PDF</button>
 </div>
 </body>
 </html>`;
 
-    // Use iframe approach for most reliable cross-browser printing
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-9999px";
-    iframe.style.top = "-9999px";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "none";
-    document.body.appendChild(iframe);
-
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) {
-      // Fallback: download as HTML file
-      const blob = new Blob([html], { type: "text/html" });
+    // Open as a new tab via window.open — most reliable for repeated use
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+    } else {
+      // Popup blocked — fallback to downloading the HTML file
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -316,36 +312,7 @@ body{font-family:'DM Sans',sans-serif;background:#0F1729;display:flex;flex-direc
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 10000);
-      return;
     }
-
-    iframeDoc.open();
-    iframeDoc.write(html);
-    iframeDoc.close();
-
-    // Wait for fonts and content to load, then trigger print
-    iframe.onload = () => {
-      setTimeout(() => {
-        try {
-          iframe.contentWindow?.print();
-        } catch {
-          // If iframe print fails, fallback to download
-          const blob = new Blob([html], { type: "text/html" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `NIS2-Certifikat-${userName.replace(/\s+/g, "-")}.html`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 10000);
-        }
-        // Remove iframe after print dialog closes
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }, 500);
-    };
   }, [user]);
 
   if (isLoading) {
