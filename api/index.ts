@@ -500,11 +500,24 @@ app.post("/api/stripe/webhook", async (req, res) => {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.client_reference_id;
+      const customerId = typeof session.customer === 'string' ? session.customer : null;
 
       if (userId) {
-        const customerId = typeof session.customer === 'string' ? session.customer : null;
+        // In-app checkout: client_reference_id is the user ID
         await storage.updateUserPayment(parseInt(userId), true, customerId || `stripe_${session.id}`);
         console.log(`Payment confirmed for user ${userId}`);
+      } else {
+        // Payment Link: no client_reference_id, match by email
+        const email = session.customer_details?.email || session.customer_email;
+        if (email) {
+          const user = await storage.getUserByEmail(email);
+          if (user) {
+            await storage.updateUserPayment(user.id, true, customerId || `stripe_${session.id}`);
+            console.log(`Payment Link payment confirmed for user ${user.id} (${email})`);
+          } else {
+            console.log(`Payment received for unknown email: ${email}`);
+          }
+        }
       }
     }
 
