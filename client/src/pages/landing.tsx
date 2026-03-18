@@ -122,7 +122,7 @@ export default function LandingPage() {
                   <div>
                     <h3 className="font-bold text-lg text-white">Spår 1: Ledning & Styrelse</h3>
                     <div className="flex items-center gap-2 text-white/50 text-sm">
-                      <Clock className="h-3.5 w-3.5" /> ~40 minuter • Gemensam + 3 avsnitt
+                      <Clock className="h-3.5 w-3.5" /> ~40 minuter • Gemensam + Ledning + Personal
                     </div>
                   </div>
                 </div>
@@ -142,6 +142,9 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
+                <p className="text-xs text-cyan-400/70 mb-1">
+                  Inkluderar även Personal-avsnitten — slutprovet innehåller 5 frågor från dessa.
+                </p>
                 <p className="text-xs text-white/40">
                   Riktat till VD, styrelse, ledningsgrupp och beslutsfattare.
                 </p>

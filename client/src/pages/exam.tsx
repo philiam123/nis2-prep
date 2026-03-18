@@ -24,25 +24,31 @@ interface Answer {
 
 interface TrackConfig {
   track: number; // 1 or 2 — matches DB track column
-  domains: number[]; // which domain IDs to pull questions from
-  questionCount: number;
+  domains: number[]; // primary domain IDs to pull questions from
+  questionCount: number; // questions from primary domains
+  bonusDomains?: number[]; // extra domains to pull bonus questions from
+  bonusCount?: number; // how many bonus questions
   timeSeconds: number;
   title: string;
   shortTitle: string;
   color: string;
+  description: string;
 }
 
-// Track 1 (Ledning) = gemensam (domain 0) + ledning (domain 1)
-// Track 2 (Personal) = gemensam (domain 0) + personal (domain 2)
+// Track 1 (Ledning) = gemensam (0) + ledning (1) + 5 frågor från personal (2)
+// Track 2 (Personal) = gemensam (0) + personal (2)
 const TRACK_CONFIGS: Record<number, TrackConfig> = {
   1: {
     track: 1,
     domains: [0, 1],
-    questionCount: 20,
+    questionCount: 15,
+    bonusDomains: [2],
+    bonusCount: 5,
     timeSeconds: 40 * 60,
     title: "Ledning & Styrelse",
     shortTitle: "Ledning & Styrelse",
     color: "#00D4FF",
+    description: "Gemensam + Ledning + 5 frågor från Personal — 20 frågor, 40 min",
   },
   2: {
     track: 2,
@@ -52,6 +58,7 @@ const TRACK_CONFIGS: Record<number, TrackConfig> = {
     title: "All Personal",
     shortTitle: "All Personal",
     color: "#0066FF",
+    description: "Gemensam + Personal — 25 frågor, 50 min",
   },
 };
 
@@ -169,12 +176,22 @@ export default function ExamPage() {
 
   const startExam = (track: number) => {
     const config = TRACK_CONFIGS[track];
-    // Pull from all domains the track covers
-    const filtered = allQuestions.filter((q) => config.domains.includes(q.domain));
-    const shuffled = shuffleArray(filtered);
-    const count = Math.min(config.questionCount, shuffled.length);
-    const selected = shuffled.slice(0, count);
-    const finalQuestions = selected.map(q => shuffleQuestion(q));
+    // Pull primary questions
+    const primaryFiltered = allQuestions.filter((q) => config.domains.includes(q.domain));
+    const primaryShuffled = shuffleArray(primaryFiltered);
+    const primaryCount = Math.min(config.questionCount, primaryShuffled.length);
+    let selected = primaryShuffled.slice(0, primaryCount);
+
+    // Pull bonus questions from extra domains (e.g. Ledning gets 5 from Personal)
+    if (config.bonusDomains && config.bonusCount) {
+      const bonusFiltered = allQuestions.filter((q) => config.bonusDomains!.includes(q.domain));
+      const bonusShuffled = shuffleArray(bonusFiltered);
+      const bonusCount = Math.min(config.bonusCount, bonusShuffled.length);
+      selected = [...selected, ...bonusShuffled.slice(0, bonusCount)];
+    }
+
+    // Final shuffle so bonus questions aren't all at the end
+    const finalQuestions = shuffleArray(selected).map(q => shuffleQuestion(q));
 
     setSelectedTrack(track);
     setQuestions(finalQuestions);
@@ -221,7 +238,9 @@ export default function ExamPage() {
   const domainBreakdown = useMemo(() => {
     if (!selectedTrack) return [];
     const config = TRACK_CONFIGS[selectedTrack];
-    return config.domains.map(domainId => {
+    // Include both primary and bonus domains in the breakdown
+    const allDomainIds = [...config.domains, ...(config.bonusDomains || [])];
+    return allDomainIds.map(domainId => {
       const domain = domainData.find(d => d.id === domainId);
       if (!domain) return null;
       const domainAnswers = answers.filter(
@@ -306,7 +325,7 @@ export default function ExamPage() {
                   <h3 className="font-semibold text-lg">Ledning & Styrelse</h3>
                   {track1Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                 </div>
-                <p className="text-sm text-muted-foreground">Gemensam + Ledning — 20 frågor, 40 minuter, 70% för godkänt</p>
+                <p className="text-sm text-muted-foreground">Gemensam + Ledning + 5 frågor från Personal — 20 frågor, 40 minuter, 70% för godkänt</p>
                 {track1Cert && (
                   <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                     Certifikat utfärdat — {Math.round((track1Cert.examScore / track1Cert.totalQuestions) * 100)}%
