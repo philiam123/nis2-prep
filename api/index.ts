@@ -289,8 +289,8 @@ passport.use(
   new LocalStrategy({ usernameField: "email" }, async (email, password, done) => {
     try {
       const user = await storage.getUserByEmail(email);
-      if (!user) return done(null, false, { message: "Invalid email or password" });
-      if (!verifyHash(password, user.password)) return done(null, false, { message: "Invalid email or password" });
+      if (!user) return done(null, false, { message: "Fel lösenord eller e-post" });
+      if (!verifyHash(password, user.password)) return done(null, false, { message: "Fel lösenord eller e-post" });
       return done(null, user);
     } catch (err) {
       return done(err);
@@ -358,7 +358,7 @@ app.post("/api/auth/login", (req, res, next) => {
 
   passport.authenticate("local", (err: any, user: any, info: any) => {
     if (err) return res.status(500).json({ message: "Server error" });
-    if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
+    if (!user) return res.status(401).json({ message: info?.message || "Fel lösenord eller e-post" });
 
     req.login(user, (err) => {
       if (err) return res.status(500).json({ message: "Login failed" });
