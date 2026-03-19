@@ -20,10 +20,13 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 
 // ── Stripe setup ──
-if (!process.env.STRIPE_SECRET_KEY) {
+const stripeKey = (process.env.STRIPE_SECRET_KEY || '').trim();
+if (!stripeKey) {
   console.error('STRIPE_SECRET_KEY is not set — payment features will fail');
+} else {
+  console.log('Stripe key loaded:', stripeKey.substring(0, 12) + '...' + stripeKey.substring(stripeKey.length - 4));
 }
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing');
+const stripe = new Stripe(stripeKey || 'sk_missing');
 
 const STRIPE_PRICE_AMOUNT = 149000; // 1490 SEK in öre
 const STRIPE_CURRENCY = "sek";
@@ -412,6 +415,16 @@ app.patch("/api/auth/profile", requireAuth, async (req, res) => {
     }
   } catch (err: any) {
     res.status(500).json({ message: err.message || "Profiluppdatering misslyckades" });
+  }
+});
+
+// ── Stripe health check ──
+app.get("/api/stripe/health", async (_req, res) => {
+  try {
+    const bal = await stripe.balance.retrieve();
+    res.json({ ok: true, livemode: bal.livemode });
+  } catch (err: any) {
+    res.json({ ok: false, error: err.message, type: err.type, code: err.code });
   }
 });
 
