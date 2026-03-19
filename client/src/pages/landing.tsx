@@ -267,9 +267,13 @@ export default function LandingPage() {
 
       {/* Pricing */}
       <section className="py-20 px-4 bg-white/[0.02] border-y border-white/10">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-8">Enkel prissättning</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-3">Enkel prissättning</h2>
+          <p className="text-white/50 mb-12 max-w-xl mx-auto">
+            Individuell licens eller volymrabatt för företag. Certifikat giltigt i 12 månader med möjlighet till förnyelse.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
             {/* Individ */}
             <Card className="bg-white/[0.03] border-cyan-500/30">
               <CardContent className="pt-8 pb-8">
@@ -282,10 +286,10 @@ export default function LandingPage() {
                   {[
                     "11 utbildningsavsnitt",
                     "100+ quizfrågor med förklaringar",
-                    "Slutprov med certifikat",
+                    "Slutprov med certifikat (12 mån giltighet)",
                     "Anpassat för energisektorn",
                     "Uppfyller Cybersäkerhetslagens krav",
-                    "Obegränsad tillgång",
+                    "Förnyelseprov till reducerat pris",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />
@@ -316,15 +320,33 @@ export default function LandingPage() {
                   <Building2 className="h-4 w-4 text-cyan-400" />
                   <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Företag</span>
                 </div>
-                <div className="text-3xl font-bold mb-1 text-white">Kontakta oss</div>
-                <div className="text-white/50 mb-8">Anpassat pris för er organisation.</div>
+                <div className="text-3xl font-bold mb-1 text-white">Volymrabatt</div>
+                <div className="text-white/50 mb-6">Upp till 47% rabatt. Samlad faktura.</div>
+
+                {/* Volume tiers */}
+                <div className="space-y-3 mb-8">
+                  {[
+                    { range: "5–19 licenser", price: "1 190 kr", discount: "~20% rabatt" },
+                    { range: "20–49 licenser", price: "990 kr", discount: "~33% rabatt" },
+                    { range: "50–99 licenser", price: "790 kr", discount: "~47% rabatt" },
+                    { range: "100+ licenser", price: "Offert", discount: "Kontakta oss" },
+                  ].map((tier) => (
+                    <div key={tier.range} className="flex items-center justify-between text-sm px-4 py-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+                      <span className="text-white/70">{tier.range}</span>
+                      <div className="text-right">
+                        <span className="font-semibold text-white">{tier.price}</span>
+                        <span className="text-cyan-400 text-xs ml-2">{tier.discount}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
                 <ul className="text-left mb-8 space-y-3 max-w-xs mx-auto">
                   {[
-                    "Anpassat pris vid 5+ licenser",
+                    "Gemensam företagskod för registrering",
                     "Samlad faktura",
                     "Uppföljning av kursframsteg",
                     "Dedikerad support",
-                    "Skräddarsydda avsnitt",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-cyan-400 shrink-0" />

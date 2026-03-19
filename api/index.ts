@@ -41,6 +41,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(1),
+  companyCode: z.string().optional(),
 });
 
 const insertStudyProgressSchema = z.object({
@@ -66,6 +67,7 @@ type User = {
   hasPaid: boolean;
   isAdmin: boolean;
   stripeCustomerId: string | null;
+  companyCode: string | null;
   createdAt: Date;
 };
 
@@ -92,7 +94,21 @@ type Certificate = {
   certificateId: string;
   examScore: number;
   totalQuestions: number;
+  track: number;
   issuedAt: Date;
+  expiresAt: Date | null;
+  isRenewal: boolean;
+};
+
+type CompanyCode = {
+  id: number;
+  code: string;
+  companyName: string;
+  maxUses: number;
+  usedCount: number;
+  pricePerUser: number;
+  isActive: boolean;
+  createdAt: Date;
 };
 
 // ── Simple hash ──
@@ -137,7 +153,7 @@ const dbPool = new pg.Pool({
 class PgStorage {
   async getUser(id: number): Promise<User | undefined> {
     const { rows } = await dbPool.query(
-      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", created_at as "createdAt" FROM users WHERE id = $1',
+      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt" FROM users WHERE id = $1',
       [id]
     );
     return rows[0] || undefined;
@@ -145,7 +161,7 @@ class PgStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const { rows } = await dbPool.query(
-      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", created_at as "createdAt" FROM users WHERE email = $1',
+      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt" FROM users WHERE email = $1',
       [email]
     );
     return rows[0] || undefined;
@@ -153,15 +169,15 @@ class PgStorage {
 
   async getAllUsers(): Promise<User[]> {
     const { rows } = await dbPool.query(
-      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", created_at as "createdAt" FROM users'
+      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt" FROM users'
     );
     return rows;
   }
 
-  async createUser(user: { email: string; password: string; name: string }): Promise<User> {
+  async createUser(user: { email: string; password: string; name: string; hasPaid?: boolean; companyCode?: string }): Promise<User> {
     const { rows } = await dbPool.query(
-      'INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", created_at as "createdAt"',
-      [user.email, user.password, user.name]
+      'INSERT INTO users (email, password, name, has_paid, company_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt"',
+      [user.email, user.password, user.name, user.hasPaid || false, user.companyCode || null]
     );
     return rows[0];
   }
@@ -221,26 +237,69 @@ class PgStorage {
 
   async getCertificates(userId: number): Promise<Certificate[]> {
     const { rows } = await dbPool.query(
-      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt" FROM certificates WHERE user_id = $1',
+      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt", expires_at as "expiresAt", is_renewal as "isRenewal" FROM certificates WHERE user_id = $1',
       [userId]
     );
     return rows;
   }
 
-  async createCertificate(cert: { userId: number; certificateId: string; examScore: number; totalQuestions: number; track: number }): Promise<Certificate> {
+  async createCertificate(cert: { userId: number; certificateId: string; examScore: number; totalQuestions: number; track: number; isRenewal?: boolean }): Promise<Certificate> {
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     const { rows } = await dbPool.query(
-      'INSERT INTO certificates (user_id, certificate_id, exam_score, total_questions, track) VALUES ($1, $2, $3, $4, $5) RETURNING id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt"',
-      [cert.userId, cert.certificateId, cert.examScore, cert.totalQuestions, cert.track]
+      'INSERT INTO certificates (user_id, certificate_id, exam_score, total_questions, track, expires_at, is_renewal) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt", expires_at as "expiresAt", is_renewal as "isRenewal"',
+      [cert.userId, cert.certificateId, cert.examScore, cert.totalQuestions, cert.track, expiresAt, cert.isRenewal || false]
     );
     return rows[0];
   }
 
-  async getCertificateById(certificateId: string): Promise<Certificate | undefined> {
+  async getCertificateById(certificateId: string): Promise<(Certificate & { userName?: string; userEmail?: string }) | undefined> {
     const { rows } = await dbPool.query(
-      'SELECT id, user_id as "userId", certificate_id as "certificateId", exam_score as "examScore", total_questions as "totalQuestions", track, issued_at as "issuedAt" FROM certificates WHERE certificate_id = $1',
+      'SELECT c.id, c.user_id as "userId", c.certificate_id as "certificateId", c.exam_score as "examScore", c.total_questions as "totalQuestions", c.track, c.issued_at as "issuedAt", c.expires_at as "expiresAt", c.is_renewal as "isRenewal", u.name as "userName", u.email as "userEmail" FROM certificates c JOIN users u ON c.user_id = u.id WHERE c.certificate_id = $1',
       [certificateId]
     );
     return rows[0] || undefined;
+  }
+
+  // ── Company Codes ──
+  async getCompanyCodes(): Promise<CompanyCode[]> {
+    const { rows } = await dbPool.query(
+      'SELECT id, code, company_name as "companyName", max_uses as "maxUses", used_count as "usedCount", price_per_user as "pricePerUser", is_active as "isActive", created_at as "createdAt" FROM company_codes ORDER BY created_at DESC'
+    );
+    return rows;
+  }
+
+  async getCompanyCodeByCode(code: string): Promise<CompanyCode | undefined> {
+    const { rows } = await dbPool.query(
+      'SELECT id, code, company_name as "companyName", max_uses as "maxUses", used_count as "usedCount", price_per_user as "pricePerUser", is_active as "isActive", created_at as "createdAt" FROM company_codes WHERE code = $1',
+      [code]
+    );
+    return rows[0] || undefined;
+  }
+
+  async createCompanyCode(data: { code: string; companyName: string; maxUses: number; pricePerUser: number }): Promise<CompanyCode> {
+    const { rows } = await dbPool.query(
+      'INSERT INTO company_codes (code, company_name, max_uses, price_per_user) VALUES ($1, $2, $3, $4) RETURNING id, code, company_name as "companyName", max_uses as "maxUses", used_count as "usedCount", price_per_user as "pricePerUser", is_active as "isActive", created_at as "createdAt"',
+      [data.code, data.companyName, data.maxUses, data.pricePerUser]
+    );
+    return rows[0];
+  }
+
+  async incrementCompanyCodeUsage(code: string): Promise<void> {
+    await dbPool.query('UPDATE company_codes SET used_count = used_count + 1 WHERE code = $1', [code]);
+  }
+
+  async updateCompanyCode(id: number, data: { isActive?: boolean; maxUses?: number }): Promise<void> {
+    if (data.isActive !== undefined) {
+      await dbPool.query('UPDATE company_codes SET is_active = $1 WHERE id = $2', [data.isActive, id]);
+    }
+    if (data.maxUses !== undefined) {
+      await dbPool.query('UPDATE company_codes SET max_uses = $1 WHERE id = $2', [data.maxUses, id]);
+    }
+  }
+
+  async deleteCompanyCode(id: number): Promise<void> {
+    await dbPool.query('DELETE FROM company_codes WHERE id = $1', [id]);
   }
 }
 
@@ -336,11 +395,28 @@ app.post("/api/auth/register", async (req, res) => {
     const existing = await storage.getUserByEmail(data.email);
     if (existing) return res.status(400).json({ message: "Email already registered" });
 
+    let hasPaid = false;
+    // Validate company code if provided
+    if (data.companyCode) {
+      const cc = await storage.getCompanyCodeByCode(data.companyCode.toUpperCase());
+      if (!cc) return res.status(400).json({ message: "Ogiltig företagskod" });
+      if (!cc.isActive) return res.status(400).json({ message: "Företagskoden är inte längre aktiv" });
+      if (cc.usedCount >= cc.maxUses) return res.status(400).json({ message: "Företagskoden har nått sin gräns" });
+      hasPaid = true;
+    }
+
     const user = await storage.createUser({
       email: data.email,
       password: simpleHash(data.password),
       name: data.name,
+      hasPaid,
+      companyCode: data.companyCode?.toUpperCase() || undefined,
     });
+
+    // Increment usage after successful creation
+    if (data.companyCode) {
+      await storage.incrementCompanyCodeUsage(data.companyCode.toUpperCase());
+    }
 
     req.login(user, (err) => {
       if (err) return res.status(500).json({ message: "Login failed after registration" });
@@ -598,10 +674,15 @@ app.post("/api/certificates", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "Score below passing threshold (70%)" });
     }
 
-    // Check for existing certificate for this track
+    // Check for existing VALID certificate for this track
     const existing = await storage.getCertificates(user.id);
-    if (existing.find((c: any) => c.track === track)) {
-      return res.status(400).json({ message: "Du har redan ett certifikat för detta spår" });
+    const existingForTrack = existing.find((c: any) => c.track === track);
+    
+    // Allow renewal if certificate has expired
+    const isRenewal = existingForTrack ? (existingForTrack.expiresAt && new Date(existingForTrack.expiresAt) < new Date()) : false;
+    
+    if (existingForTrack && !isRenewal) {
+      return res.status(400).json({ message: "Du har redan ett giltigt certifikat för detta spår" });
     }
 
     const cert = await storage.createCertificate({
@@ -610,6 +691,7 @@ app.post("/api/certificates", requireAuth, async (req, res) => {
       examScore,
       totalQuestions,
       track,
+      isRenewal: isRenewal || false,
     });
     res.json(cert);
   } catch (err: any) {
@@ -677,6 +759,100 @@ app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
   if (user.isAdmin) return res.status(400).json({ message: "Cannot delete admin" });
   res.json({ message: "User deleted", userId });
+});
+
+// Admin: create user
+app.post("/api/admin/users", requireAdmin, async (req, res) => {
+  try {
+    const { email, password, name, hasPaid } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: "E-post, lösenord och namn krävs" });
+    }
+    const existing = await storage.getUserByEmail(email);
+    if (existing) return res.status(400).json({ message: "E-postadressen är redan registrerad" });
+
+    const user = await storage.createUser({
+      email,
+      password: simpleHash(password),
+      name,
+      hasPaid: hasPaid || false,
+    });
+    const { password: _, ...safeUser } = user;
+    res.json(safeUser);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message || "Kunde inte skapa användare" });
+  }
+});
+
+// Admin: toggle payment status
+app.patch("/api/admin/users/:id/payment", requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { hasPaid } = req.body;
+    if (typeof hasPaid !== 'boolean') {
+      return res.status(400).json({ message: "hasPaid måste vara true eller false" });
+    }
+    await storage.updateUserPayment(userId, hasPaid);
+    res.json({ message: "Betalningsstatus uppdaterad", userId, hasPaid });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || "Kunde inte uppdatera" });
+  }
+});
+
+// ── Company Code Routes (Admin) ──
+app.get("/api/admin/company-codes", requireAdmin, async (req, res) => {
+  const codes = await storage.getCompanyCodes();
+  res.json(codes);
+});
+
+app.post("/api/admin/company-codes", requireAdmin, async (req, res) => {
+  try {
+    const { code, companyName, maxUses, pricePerUser } = req.body;
+    if (!code || !companyName) {
+      return res.status(400).json({ message: "Kod och företagsnamn krävs" });
+    }
+    const existing = await storage.getCompanyCodeByCode(code.toUpperCase());
+    if (existing) return res.status(400).json({ message: "Koden finns redan" });
+
+    const cc = await storage.createCompanyCode({
+      code: code.toUpperCase(),
+      companyName,
+      maxUses: maxUses || 50,
+      pricePerUser: pricePerUser || 119000,
+    });
+    res.json(cc);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message || "Kunde inte skapa kod" });
+  }
+});
+
+app.patch("/api/admin/company-codes/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { isActive, maxUses } = req.body;
+    await storage.updateCompanyCode(id, { isActive, maxUses });
+    res.json({ message: "Uppdaterad" });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || "Kunde inte uppdatera" });
+  }
+});
+
+app.delete("/api/admin/company-codes/:id", requireAdmin, async (req, res) => {
+  try {
+    await storage.deleteCompanyCode(parseInt(req.params.id));
+    res.json({ message: "Borttagen" });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || "Kunde inte ta bort" });
+  }
+});
+
+// Public: validate company code (for registration form)
+app.get("/api/company-codes/validate/:code", async (req, res) => {
+  const cc = await storage.getCompanyCodeByCode(req.params.code.toUpperCase());
+  if (!cc || !cc.isActive || cc.usedCount >= cc.maxUses) {
+    return res.json({ valid: false });
+  }
+  res.json({ valid: true, companyName: cc.companyName, remaining: cc.maxUses - cc.usedCount });
 });
 
 export default app;

@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Award, Download, Shield, QrCode, ExternalLink, Copy, Check, Users, GraduationCap } from "lucide-react";
+import { Award, Download, Shield, QrCode, ExternalLink, Copy, Check, Users, GraduationCap, RefreshCw, CalendarClock, AlertTriangle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useCallback } from "react";
 import QRCode from "qrcode";
@@ -16,6 +16,8 @@ interface CertificateData {
   totalQuestions: number;
   track: number;
   issuedAt: string;
+  expiresAt: string | null;
+  isRenewal: boolean;
 }
 
 function getTrackName(track: number): string {
@@ -40,6 +42,12 @@ function CertificateCard({ cert, user, onPrint }: { cert: CertificateData; user:
   const dateStr = new Date(cert.issuedAt).toLocaleDateString("sv-SE", {
     year: "numeric", month: "long", day: "numeric"
   });
+  const expiresStr = cert.expiresAt
+    ? new Date(cert.expiresAt).toLocaleDateString("sv-SE", { year: "numeric", month: "long", day: "numeric" })
+    : null;
+  const isExpired = cert.expiresAt ? new Date(cert.expiresAt) < new Date() : false;
+  const daysUntilExpiry = cert.expiresAt ? Math.ceil((new Date(cert.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  const expiringSoon = daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 60;
   const trackName = getTrackName(cert.track);
   const trackColor = getTrackColor(cert.track);
 
@@ -62,6 +70,13 @@ function CertificateCard({ cert, user, onPrint }: { cert: CertificateData; user:
               NIS2 Utbildning
             </span>
           </div>
+
+          {cert.isRenewal && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs mb-3">
+              <RefreshCw className="h-3 w-3" />
+              Förnyat certifikat
+            </div>
+          )}
 
           <h2 className="text-2xl font-bold mb-1">Kurscertifikat</h2>
           <p className="text-white/50 text-sm mb-2">
@@ -93,6 +108,14 @@ function CertificateCard({ cert, user, onPrint }: { cert: CertificateData; user:
               <p className="text-xl font-bold text-cyan-400">{dateStr}</p>
               <p className="text-xs text-white/40">Utfärdat</p>
             </div>
+            {expiresStr && (
+              <div className="text-center">
+                <p className={`text-xl font-bold ${isExpired ? 'text-red-400' : expiringSoon ? 'text-amber-400' : 'text-cyan-400'}`}>
+                  {expiresStr}
+                </p>
+                <p className="text-xs text-white/40">Giltigt till</p>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-center gap-6">
@@ -115,6 +138,35 @@ function CertificateCard({ cert, user, onPrint }: { cert: CertificateData; user:
           </div>
         </CardContent>
       </Card>
+
+      {/* Expiry warning / renewal */}
+      {isExpired && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4" data-testid="cert-expired-banner">
+          <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium text-red-600">Certifikatet har gått ut</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ditt certifikat gick ut {expiresStr}. Du kan förnya det genom att göra om slutprovet.
+            </p>
+            <Button size="sm" className="mt-3" onClick={() => navigate("/exam")}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Förnya certifikat
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {expiringSoon && !isExpired && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4" data-testid="cert-expiring-banner">
+          <CalendarClock className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium text-amber-600">Certifikatet går snart ut</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ditt certifikat går ut om {daysUntilExpiry} dagar ({expiresStr}). Du kan förnya det i förväg genom att göra om slutprovet.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
@@ -157,6 +209,22 @@ function CertificateCard({ cert, user, onPrint }: { cert: CertificateData; user:
               <span className="text-muted-foreground">Utfärdat</span>
               <span className="font-medium">{dateStr}</span>
             </div>
+            {expiresStr && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Giltigt till</span>
+                <span className={`font-medium ${isExpired ? 'text-red-500' : expiringSoon ? 'text-amber-500' : ''}`}>
+                  {expiresStr}
+                  {isExpired && ' (Utgånget)'}
+                  {expiringSoon && !isExpired && ` (${daysUntilExpiry} dagar kvar)`}
+                </span>
+              </div>
+            )}
+            {cert.isRenewal && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Typ</span>
+                <span className="font-medium text-cyan-600">Förnyat certifikat</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Utbildning</span>
               <span className="font-medium">NIS2 Cybersäkerhetsutbildning — {trackName}</span>
