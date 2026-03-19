@@ -418,16 +418,6 @@ app.patch("/api/auth/profile", requireAuth, async (req, res) => {
   }
 });
 
-// ── Stripe health check ──
-app.get("/api/stripe/health", async (_req, res) => {
-  try {
-    const bal = await stripe.balance.retrieve();
-    res.json({ ok: true, livemode: bal.livemode });
-  } catch (err: any) {
-    res.json({ ok: false, error: err.message, type: err.type, code: err.code });
-  }
-});
-
 // ── Payment Routes (Stripe Checkout) ──
 app.post("/api/payment/create-checkout", requireAuth, async (req, res) => {
   try {
