@@ -57,7 +57,7 @@ export default function PrivacyPage() {
               <li><strong className="text-white/90">Namn</strong> — för att identifiera dig och utfärda certifikat</li>
               <li><strong className="text-white/90">E-postadress</strong> — för inloggning och kommunikation</li>
               <li><strong className="text-white/90">Betalningsinformation</strong> — hanteras av Stripe; vi lagrar aldrig kortuppgifter</li>
-              <li><strong className="text-white/90">Studieframsteg</strong> — vilka moduler och kapitel du har slutfört</li>
+              <li><strong className="text-white/90">Studieframsteg</strong> — vilka avsnitt du har slutfört</li>
               <li><strong className="text-white/90">Quizresultat</strong> — poäng och resultat från kunskapstester och slutprov</li>
             </ul>
           </section>

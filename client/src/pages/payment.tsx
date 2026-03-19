@@ -44,7 +44,7 @@ export default function PaymentPage() {
           <CardContent className="space-y-6">
             <div className="space-y-3">
               {[
-                { icon: BookOpen, text: "13 utbildningsmoduler anpassade för energisektorn" },
+                { icon: BookOpen, text: "11 utbildningsavsnitt anpassade för energisektorn" },
                 { icon: HelpCircle, text: "100+ quizfrågor med detaljerade förklaringar" },
                 { icon: Award, text: "Slutprov med personligt kurscertifikat" },
                 { icon: Shield, text: "Uppfyller Cybersäkerhetslagens utbildningskrav" },

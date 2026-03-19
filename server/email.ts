@@ -33,7 +33,7 @@ export async function sendPaymentConfirmation(to: string, name: string) {
         <h1 style="color:#0F1729">Tack för din betalning!</h1>
         <p>Hej ${name},</p>
         <p>Vi bekräftar din betalning på <strong>1 490 kr</strong> för NIS2 Cybersäkerhetsutbildning.</p>
-        <p>Du har nu obegränsad tillgång till alla 13 utbildningsmoduler, quiz och slutprov.</p>
+        <p>Du har nu obegränsad tillgång till alla 11 utbildningsavsnitt, quiz och slutprov.</p>
         <p><a href="https://nis2utbildning.com/#/dashboard" style="display:inline-block;padding:12px 24px;background:linear-gradient(to right,#06b6d4,#3b82f6);color:white;text-decoration:none;border-radius:8px;font-weight:600">Gå till dashboard</a></p>
         <p style="color:#666;font-size:14px;margin-top:24px">Med vänliga hälsningar,<br>NIS2 Utbildning av Electrab AB</p>
       </div>`
