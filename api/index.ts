@@ -68,6 +68,7 @@ type User = {
   isAdmin: boolean;
   stripeCustomerId: string | null;
   companyCode: string | null;
+  canRenew: boolean;
   createdAt: Date;
 };
 
@@ -153,7 +154,7 @@ const dbPool = new pg.Pool({
 class PgStorage {
   async getUser(id: number): Promise<User | undefined> {
     const { rows } = await dbPool.query(
-      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt" FROM users WHERE id = $1',
+      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", can_renew as "canRenew", created_at as "createdAt" FROM users WHERE id = $1',
       [id]
     );
     return rows[0] || undefined;
@@ -161,7 +162,7 @@ class PgStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const { rows } = await dbPool.query(
-      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt" FROM users WHERE email = $1',
+      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", can_renew as "canRenew", created_at as "createdAt" FROM users WHERE email = $1',
       [email]
     );
     return rows[0] || undefined;
@@ -169,14 +170,14 @@ class PgStorage {
 
   async getAllUsers(): Promise<User[]> {
     const { rows } = await dbPool.query(
-      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt" FROM users'
+      'SELECT id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", can_renew as "canRenew", created_at as "createdAt" FROM users'
     );
     return rows;
   }
 
   async createUser(user: { email: string; password: string; name: string; hasPaid?: boolean; companyCode?: string }): Promise<User> {
     const { rows } = await dbPool.query(
-      'INSERT INTO users (email, password, name, has_paid, company_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", created_at as "createdAt"',
+      'INSERT INTO users (email, password, name, has_paid, company_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, password, name, has_paid as "hasPaid", is_admin as "isAdmin", stripe_customer_id as "stripeCustomerId", company_code as "companyCode", can_renew as "canRenew", created_at as "createdAt"',
       [user.email, user.password, user.name, user.hasPaid || false, user.companyCode || null]
     );
     return rows[0];
@@ -678,11 +679,16 @@ app.post("/api/certificates", requireAuth, async (req, res) => {
     const existing = await storage.getCertificates(user.id);
     const existingForTrack = existing.find((c: any) => c.track === track);
     
-    // Allow renewal if certificate has expired
-    const isRenewal = existingForTrack ? (existingForTrack.expiresAt && new Date(existingForTrack.expiresAt) < new Date()) : false;
+    // Allow renewal if certificate has expired AND user has canRenew flag
+    const isExpired = existingForTrack ? (existingForTrack.expiresAt && new Date(existingForTrack.expiresAt) < new Date()) : false;
+    const isRenewal = isExpired && user.canRenew;
     
-    if (existingForTrack && !isRenewal) {
+    if (existingForTrack && !isExpired) {
       return res.status(400).json({ message: "Du har redan ett giltigt certifikat för detta spår" });
+    }
+
+    if (isExpired && !user.canRenew) {
+      return res.status(403).json({ message: "Förnyelse ej aktiverad. Kontakta oss för att förnya ditt certifikat." });
     }
 
     const cert = await storage.createCertificate({
@@ -693,9 +699,34 @@ app.post("/api/certificates", requireAuth, async (req, res) => {
       track,
       isRenewal: isRenewal || false,
     });
+
+    // Reset canRenew after successful renewal
+    if (isRenewal) {
+      await dbPool.query('UPDATE users SET can_renew = false WHERE id = $1', [user.id]);
+    }
+
     res.json(cert);
   } catch (err: any) {
     res.status(400).json({ message: err.message || "Failed to create certificate" });
+  }
+});
+
+// Check exam eligibility per track (for frontend lock logic)
+app.get("/api/exam/eligibility", requireAuth, async (req, res) => {
+  try {
+    const user = req.user as User;
+    const certs = await storage.getCertificates(user.id);
+    const tracks = [1, 2].map(track => {
+      const cert = certs.find(c => c.track === track);
+      const isExpired = cert?.expiresAt ? new Date(cert.expiresAt) < new Date() : false;
+      const hasValidCert = cert && !isExpired;
+      const needsRenewal = cert && isExpired;
+      const canTakeExam = !cert || (isExpired && user.canRenew);
+      return { track, hasValidCert, needsRenewal, canRenew: user.canRenew, canTakeExam };
+    });
+    res.json(tracks);
+  } catch (err: any) {
+    res.status(500).json({ message: "Eligibility check failed" });
   }
 });
 
@@ -781,6 +812,21 @@ app.post("/api/admin/users", requireAdmin, async (req, res) => {
     res.json(safeUser);
   } catch (err: any) {
     res.status(400).json({ message: err.message || "Kunde inte skapa användare" });
+  }
+});
+
+// Admin: toggle canRenew
+app.patch("/api/admin/users/:id/renew", requireAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { canRenew } = req.body;
+    if (typeof canRenew !== 'boolean') {
+      return res.status(400).json({ message: "canRenew m\u00e5ste vara true eller false" });
+    }
+    await dbPool.query('UPDATE users SET can_renew = $1 WHERE id = $2', [canRenew, userId]);
+    res.json({ message: "F\u00f6rnyelsestatus uppdaterad", userId, canRenew });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || "Kunde inte uppdatera" });
   }
 });
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { allQuestions, type Question } from "@/data/questions";
 import { domainData } from "@/data/domains";
 import { Button } from "@/components/ui/button";
@@ -107,8 +107,19 @@ export default function ExamPage() {
     queryKey: ["/api/certificates"],
   });
 
+  type Eligibility = { track: number; hasValidCert: boolean; needsRenewal: boolean; canRenew: boolean; canTakeExam: boolean };
+  const { data: eligibility = [] } = useQuery<Eligibility[]>({
+    queryKey: ["/api/exam/eligibility"],
+  });
+
   const track1Cert = certificates.find((c: any) => c.track === 1);
   const track2Cert = certificates.find((c: any) => c.track === 2);
+  const track1Elig = eligibility.find(e => e.track === 1);
+  const track2Elig = eligibility.find(e => e.track === 2);
+
+  // Determine if each track is locked (expired cert without renewal permission)
+  const track1Locked = track1Elig?.needsRenewal && !track1Elig?.canRenew;
+  const track2Locked = track2Elig?.needsRenewal && !track2Elig?.canRenew;
 
   const saveResultFn = useCallback(async (data: any) => {
     try {
@@ -284,6 +295,9 @@ export default function ExamPage() {
         totalQuestions: questions.length,
         track: selectedTrack,
       });
+      // Invalidate caches so eligibility and cert data update
+      queryClient.invalidateQueries({ queryKey: ["/api/certificates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/exam/eligibility"] });
     } catch (err) {
       console.error("Failed to create certificate", err);
     }
@@ -312,38 +326,60 @@ export default function ExamPage() {
 
         {/* Track 1 Card */}
         <Card
-          className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${track1Cert ? "border-green-500/30 bg-green-500/5" : ""}`}
+          className={`transition-all border-l-4 ${
+            track1Elig?.hasValidCert ? "border-green-500/30 bg-green-500/5" :
+            track1Locked ? "opacity-75" :
+            "cursor-pointer hover:shadow-md"
+          }`}
           style={{ borderLeftColor: "#00D4FF" }}
-          onClick={() => !track1Cert && startExam(1)}
+          onClick={() => !track1Elig?.hasValidCert && !track1Locked && startExam(1)}
           data-testid="exam-track-1"
         >
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <Shield className="h-10 w-10 shrink-0" style={{ color: "#00D4FF" }} />
+              <Shield className="h-10 w-10 shrink-0" style={{ color: track1Locked ? "#999" : "#00D4FF" }} />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">Ledning & Styrelse</h3>
-                  {track1Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                  {track1Elig?.hasValidCert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                  {track1Locked && <Lock className="h-5 w-5 text-muted-foreground" />}
                 </div>
                 <p className="text-sm text-muted-foreground">Gemensam + Ledning + 5 frågor från Personal — 20 frågor, 40 minuter, 70% för godkänt</p>
-                {track1Cert && (
+                {track1Elig?.hasValidCert && track1Cert && (
                   <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                     Certifikat utfärdat — {Math.round((track1Cert.examScore / track1Cert.totalQuestions) * 100)}%
                   </p>
                 )}
+                {track1Locked && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                    Certifikatet har gått ut — kontakta oss för att aktivera förnyelse
+                  </p>
+                )}
+                {track1Elig?.needsRenewal && track1Elig?.canRenew && (
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Förnyelse aktiverad — du kan göra om slutprovet
+                  </p>
+                )}
               </div>
-              {!track1Cert && (
+              {/* Can take exam: no cert yet, or renewal activated */}
+              {track1Elig?.canTakeExam && !track1Elig?.hasValidCert && (
                 <Button
                   className="shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   onClick={(e) => { e.stopPropagation(); startExam(1); }}
                 >
-                  Påbörja slutprov
+                  {track1Elig?.needsRenewal ? "Förnya certifikat" : "Påbörja slutprov"}
                 </Button>
               )}
-              {track1Cert && (
+              {track1Elig?.hasValidCert && (
                 <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate("/certificate"); }}>
                   <Award className="mr-2 h-4 w-4" />
                   Visa certifikat
+                </Button>
+              )}
+              {track1Locked && (
+                <Button variant="outline" size="sm" disabled className="shrink-0">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Låst
                 </Button>
               )}
             </div>
@@ -352,38 +388,59 @@ export default function ExamPage() {
 
         {/* Track 2 Card */}
         <Card
-          className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${track2Cert ? "border-green-500/30 bg-green-500/5" : ""}`}
+          className={`transition-all border-l-4 ${
+            track2Elig?.hasValidCert ? "border-green-500/30 bg-green-500/5" :
+            track2Locked ? "opacity-75" :
+            "cursor-pointer hover:shadow-md"
+          }`}
           style={{ borderLeftColor: "#0066FF" }}
-          onClick={() => !track2Cert && startExam(2)}
+          onClick={() => !track2Elig?.hasValidCert && !track2Locked && startExam(2)}
           data-testid="exam-track-2"
         >
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <Users className="h-10 w-10 shrink-0" style={{ color: "#0066FF" }} />
+              <Users className="h-10 w-10 shrink-0" style={{ color: track2Locked ? "#999" : "#0066FF" }} />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">All Personal</h3>
-                  {track2Cert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                  {track2Elig?.hasValidCert && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                  {track2Locked && <Lock className="h-5 w-5 text-muted-foreground" />}
                 </div>
                 <p className="text-sm text-muted-foreground">Gemensam + Personal — 25 frågor, 50 minuter, 70% för godkänt</p>
-                {track2Cert && (
+                {track2Elig?.hasValidCert && track2Cert && (
                   <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                     Certifikat utfärdat — {Math.round((track2Cert.examScore / track2Cert.totalQuestions) * 100)}%
                   </p>
                 )}
+                {track2Locked && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                    Certifikatet har gått ut — kontakta oss för att aktivera förnyelse
+                  </p>
+                )}
+                {track2Elig?.needsRenewal && track2Elig?.canRenew && (
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Förnyelse aktiverad — du kan göra om slutprovet
+                  </p>
+                )}
               </div>
-              {!track2Cert && (
+              {track2Elig?.canTakeExam && !track2Elig?.hasValidCert && (
                 <Button
                   className="shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
                   onClick={(e) => { e.stopPropagation(); startExam(2); }}
                 >
-                  Påbörja slutprov
+                  {track2Elig?.needsRenewal ? "Förnya certifikat" : "Påbörja slutprov"}
                 </Button>
               )}
-              {track2Cert && (
+              {track2Elig?.hasValidCert && (
                 <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); navigate("/certificate"); }}>
                   <Award className="mr-2 h-4 w-4" />
                   Visa certifikat
+                </Button>
+              )}
+              {track2Locked && (
+                <Button variant="outline" size="sm" disabled className="shrink-0">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Låst
                 </Button>
               )}
             </div>

@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, DollarSign, BookOpen, HelpCircle, ArrowLeft,
   CheckCircle, XCircle, Shield, TrendingUp, Plus, Building2,
-  Trash2, Loader2, Copy, Check
+  Trash2, Loader2, Copy, Check, RefreshCw
 } from "lucide-react";
 
 type AdminUser = {
@@ -25,6 +25,7 @@ type AdminUser = {
   hasPaid: boolean;
   isAdmin: boolean;
   companyCode: string | null;
+  canRenew: boolean;
   createdAt: string | null;
 };
 
@@ -349,6 +350,19 @@ function UsersTable({ users }: { users: AdminUser[] }) {
     },
   });
 
+  const toggleRenew = useMutation({
+    mutationFn: async ({ id, canRenew }: { id: number; canRenew: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/users/${id}/renew`, { canRenew });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Förnyelsestatus uppdaterad" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    },
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -372,6 +386,7 @@ function UsersTable({ users }: { users: AdminUser[] }) {
                   <th className="pb-3 font-medium text-muted-foreground">E-post</th>
                   <th className="pb-3 font-medium text-muted-foreground">Företagskod</th>
                   <th className="pb-3 font-medium text-muted-foreground">Betalning</th>
+                  <th className="pb-3 font-medium text-muted-foreground">Förnyelse</th>
                   <th className="pb-3 font-medium text-muted-foreground">Registrerad</th>
                 </tr>
               </thead>
@@ -406,6 +421,26 @@ function UsersTable({ users }: { users: AdminUser[] }) {
                           <Badge variant="secondary" className="hover:bg-destructive/20">
                             <XCircle className="h-3 w-3 mr-1" />
                             Obetald
+                          </Badge>
+                        )}
+                      </button>
+                    </td>
+                    <td className="py-3">
+                      <button
+                        className="cursor-pointer"
+                        onClick={() => toggleRenew.mutate({ id: u.id, canRenew: !u.canRenew })}
+                        disabled={toggleRenew.isPending}
+                        data-testid={`toggle-renew-${u.id}`}
+                      >
+                        {u.canRenew ? (
+                          <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Aktiverad
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Ej aktiverad
                           </Badge>
                         )}
                       </button>
