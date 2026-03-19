@@ -62,9 +62,9 @@ export const domainData: Domain[] = [
             <h4>Tre huvudpelare</h4>
             <p>NIS2 vilar på tre grundläggande pelare som tillsammans skapar ett starkare cybersäkerhetsramverk:</p>
             <ul>
-              <li><strong>Bredare omfattning:</strong> Från 7 till 18 sektorer. Fler organisationer omfattas, inklusive medelstora företag med 50+ anställda eller 10M€+ omsättning</li>
+              <li><strong>Bredare omfattning:</strong> Från 7 till 18 sektorer. Fler organisationer omfattas, inklusive medelstora företag med 50+ anställda eller ~115 MSEK+ omsättning</li>
               <li><strong>Strängare krav:</strong> 10 obligatoriska säkerhetsåtgärder (artikel 21), striktare incidentrapportering, krav på ledningsansvar</li>
-              <li><strong>Hårdare straff:</strong> Böter upp till 10 MEUR eller 2% av global omsättning. Personligt ansvar för ledningen</li>
+              <li><strong>Hårdare straff:</strong> Böter upp till ~115 MSEK eller 2% av global omsättning. Personligt ansvar för ledningen</li>
             </ul>
           </div>
 
@@ -78,7 +78,7 @@ export const domainData: Domain[] = [
               <div class="stat-label">Obligatoriska åtgärder</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value">10M€</div>
+              <div class="stat-value">~115 MSEK</div>
               <div class="stat-label">Max böter</div>
             </div>
           </div>
@@ -127,20 +127,20 @@ export const domainData: Domain[] = [
             <h4>Storlekskrav</h4>
             <p>NIS2 använder EU:s standarddefinitioner för företagsstorlek. Som huvudregel omfattas:</p>
             <ul>
-              <li><strong>Medelstora företag:</strong> 50+ anställda ELLER 10M€+ i omsättning</li>
-              <li><strong>Stora företag:</strong> 250+ anställda ELLER 50M€+ i omsättning</li>
+              <li><strong>Medelstora företag:</strong> 50+ anställda ELLER ~115 MSEK+ i omsättning</li>
+              <li><strong>Stora företag:</strong> 250+ anställda ELLER ~575 MSEK+ i omsättning</li>
               <li><strong>Undantag:</strong> Vissa typer av organisationer omfattas oavsett storlek (t.ex. den enda leverantören av en kritisk tjänst i en medlemsstat)</li>
             </ul>
           </div>
 
           <div class="example-box">
             <div class="example-label">Exempel — Omfattas</div>
-            <p>Elbolaget Norrström Energi AB har 80 anställda och en omsättning på 150 MSEK (~14 MEUR). De driver ett regionalt distributionsnät. Resultat: De uppfyller storlekskravet (80 > 50 anställda), verkar inom energi (Annex I), och klassas som väsentlig verksamhetsutövare.</p>
+            <p>Elbolaget Norrström Energi AB har 80 anställda och en omsättning på 150 MSEK. De driver ett regionalt distributionsnät. Resultat: De uppfyller storlekskravet (80 > 50 anställda), verkar inom energi (Annex I), och klassas som väsentlig verksamhetsutövare.</p>
           </div>
 
           <div class="example-box">
             <div class="example-label">Exempel — Gränsfall</div>
-            <p>Smålands Vindkraft AB har 45 anställda men en omsättning på 110 MSEK (~10,5 MEUR). Trots att de har färre än 50 anställda överstiger omsättningen 10 MEUR-gränsen — de omfattas alltså av NIS2.</p>
+            <p>Smålands Vindkraft AB har 45 anställda men en omsättning på 120 MSEK. Trots att de har färre än 50 anställda överstiger omsättningen 115 MSEK-gränsen — de omfattas alltså av NIS2.</p>
           </div>
 
           <div class="example-box">
@@ -167,8 +167,8 @@ export const domainData: Domain[] = [
                   </tr>
                   <tr>
                     <td>Böter (max)</td>
-                    <td>10 MEUR eller 2% av global omsättning</td>
-                    <td>7 MEUR eller 1,4% av global omsättning</td>
+                    <td>~115 MSEK eller 2% av global omsättning</td>
+                    <td>~80 MSEK eller 1,4% av global omsättning</td>
                   </tr>
                   <tr>
                     <td>Typiska sektorer</td>
@@ -385,7 +385,7 @@ export const domainData: Domain[] = [
     color: "#00D4FF",
     chapters: [
       {
-        id: "A5",
+        id: "L5",
         title: "Avsnitt 5: Ledningens ansvar",
         content: `
           <div class="concept-block">
@@ -428,8 +428,8 @@ export const domainData: Domain[] = [
             <h4>Sanktioner</h4>
             <p>NIS2 inför betydligt hårdare sanktioner jämfört med NIS1:</p>
             <ul>
-              <li><strong>Väsentliga verksamheter:</strong> Böter upp till 10 MEUR eller 2% av global omsättning (det högsta beloppet gäller)</li>
-              <li><strong>Viktiga verksamheter:</strong> Böter upp till 7 MEUR eller 1,4% av global omsättning</li>
+              <li><strong>Väsentliga verksamheter:</strong> Böter upp till ~115 MSEK eller 2% av global omsättning (det högsta beloppet gäller)</li>
+              <li><strong>Viktiga verksamheter:</strong> Böter upp till ~80 MSEK eller 1,4% av global omsättning</li>
               <li><strong>Personligt ansvar:</strong> Ledningen kan tillfälligt förbjudas att utöva ledningsfunktioner</li>
               <li><strong>Offentliggörande:</strong> Tillsynsmyndigheten kan offentliggöra vilka organisationer som brister</li>
             </ul>
@@ -437,11 +437,11 @@ export const domainData: Domain[] = [
 
           <div class="stat-grid">
             <div class="stat-card">
-              <div class="stat-value">10M€</div>
+              <div class="stat-value">~115 MSEK</div>
               <div class="stat-label">Max böter (väsentlig)</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value">7M€</div>
+              <div class="stat-value">~80 MSEK</div>
               <div class="stat-label">Max böter (viktig)</div>
             </div>
             <div class="stat-card">
@@ -479,7 +479,7 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "A6",
+        id: "L6",
         title: "Avsnitt 6: Incidentrapportering",
         content: `
           <div class="concept-block">
@@ -553,7 +553,7 @@ export const domainData: Domain[] = [
         `,
       },
       {
-        id: "A7",
+        id: "L7",
         title: "Avsnitt 7: Leverantörs- och supply chain-säkerhet",
         content: `
           <div class="concept-block">

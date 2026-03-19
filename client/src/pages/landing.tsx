@@ -89,7 +89,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { value: "+70%", label: "Ökning av cyberattacker mot energisektorn 2024", icon: AlertTriangle },
-              { value: "10 MEUR", label: "Böter vid bristande efterlevnad", icon: Lock },
+              { value: "~115 MSEK", label: "Böter vid bristande efterlevnad", icon: Lock },
               { value: "11", label: "Utbildningsavsnitt", icon: BookOpen },
               { value: "100+", label: "Quizfrågor med förklaringar", icon: HelpCircle },
             ].map((stat) => (

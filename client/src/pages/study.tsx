@@ -163,7 +163,10 @@ export default function StudyPage() {
                             ? "bg-primary/5 font-medium"
                             : "hover:bg-accent/30"
                           }`}
-                        onClick={() => setSelectedChapter(ch.id)}
+                        onClick={() => {
+                          setSelectedChapter(ch.id);
+                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+                        }}
                         data-testid={`study-chapter-${ch.id}`}
                       >
                         <div className="shrink-0">
@@ -191,40 +194,25 @@ export default function StudyPage() {
       {/* Main content */}
       {currentChapter ? (
         <>
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{
-                    backgroundColor: `${getDomainColor(currentChapter.domain.id)}15`,
-                    color: getDomainColor(currentChapter.domain.id),
-                  }}
-                >
-                  {getDomainIcon(currentChapter.domain.id)}
-                  {currentChapter.domain.shortTitle}
-                </span>
-              </div>
-              <h1 className="text-xl font-bold" data-testid="study-chapter-title">
-                {currentChapter.chapter.title}
-              </h1>
-              <p className="text-xs text-muted-foreground mt-1">
-                {currentChapter.domain.chapters.filter(c => completedSet.has(c.id)).length} av {currentChapter.domain.chapters.length} avsnitt avklarade
-              </p>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: `${getDomainColor(currentChapter.domain.id)}15`,
+                  color: getDomainColor(currentChapter.domain.id),
+                }}
+              >
+                {getDomainIcon(currentChapter.domain.id)}
+                {currentChapter.domain.shortTitle}
+              </span>
             </div>
-            <div className="flex items-center gap-2 shrink-0 ml-4">
-              <Checkbox
-                checked={completedSet.has(currentChapter.chapter.id)}
-                onCheckedChange={(checked) =>
-                  toggleCompleteMutation.mutate({
-                    chapterId: currentChapter.chapter.id,
-                    completed: !!checked,
-                  })
-                }
-                data-testid="study-mark-complete"
-              />
-              <span className="text-sm">Markera klar</span>
-            </div>
+            <h1 className="text-xl font-bold" data-testid="study-chapter-title">
+              {currentChapter.chapter.title}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              {currentChapter.domain.chapters.filter(c => completedSet.has(c.id)).length} av {currentChapter.domain.chapters.length} avsnitt avklarade
+            </p>
           </div>
 
           {/* Study content */}
@@ -234,8 +222,26 @@ export default function StudyPage() {
             data-testid="study-content"
           />
 
+          {/* Mark complete */}
+          <div className="mt-8 mb-4 flex items-center gap-2 p-3 rounded-lg border bg-card">
+            <Checkbox
+              checked={completedSet.has(currentChapter.chapter.id)}
+              onCheckedChange={(checked) =>
+                toggleCompleteMutation.mutate({
+                  chapterId: currentChapter.chapter.id,
+                  completed: !!checked,
+                })
+              }
+              data-testid="study-mark-complete"
+            />
+            <span className="text-sm font-medium">Markera avsnitt som slutfört</span>
+            {completedSet.has(currentChapter.chapter.id) && (
+              <CheckCircle2 className="h-4 w-4 text-green-500 ml-auto" />
+            )}
+          </div>
+
           {/* Navigation */}
-          <div className="mt-8 flex justify-between gap-4">
+          <div className="flex justify-between gap-4">
             {prevChapter ? (
               <Button
                 variant="outline"

@@ -583,35 +583,47 @@ export default function ExamPage() {
         )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3">
+        <div className="space-y-3">
           {isPass && !(selectedTrack === 1 ? track1Cert : track2Cert) && (
-            <Button onClick={handleGetCertificate} data-testid="exam-get-certificate" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
-              <Award className="mr-2 h-4 w-4" />
-              Hämta certifikat
+            <Button onClick={handleGetCertificate} data-testid="exam-get-certificate" className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 h-12 text-base">
+              <Award className="mr-2 h-5 w-5" />
+              Hämta ditt certifikat
             </Button>
           )}
-          <Button onClick={handleSaveResults} disabled={saved} variant={isPass ? "outline" : "default"} data-testid="exam-save-results">
-            <Save className="mr-2 h-4 w-4" />
-            {saved ? "Sparat!" : "Spara resultat"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setScreen("pre-exam");
-              setSelectedTrack(null);
-              setAnswers([]);
-              setCurrentIndex(0);
-              setSaved(false);
-              setAnswerLocked(false);
-            }}
-            data-testid="exam-try-again"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Försök igen
-          </Button>
-          <Button variant="outline" onClick={() => navigate("/dashboard")} data-testid="exam-back-dashboard">
-            Tillbaka till dashboard
-          </Button>
+          {isPass && (selectedTrack === 1 ? track1Cert : track2Cert) && (
+            <Button onClick={() => navigate("/certificate")} data-testid="exam-view-certificate" className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 h-12 text-base">
+              <Award className="mr-2 h-5 w-5" />
+              Visa ditt certifikat
+            </Button>
+          )}
+          <div className="flex flex-wrap gap-3">
+            {!saved && (
+              <Button onClick={handleSaveResults} variant="outline" data-testid="exam-save-results">
+                <Save className="mr-2 h-4 w-4" />
+                Spara resultat
+              </Button>
+            )}
+            {!isPass && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setScreen("pre-exam");
+                  setSelectedTrack(null);
+                  setAnswers([]);
+                  setCurrentIndex(0);
+                  setSaved(false);
+                  setAnswerLocked(false);
+                }}
+                data-testid="exam-try-again"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Försök igen
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate("/dashboard")} data-testid="exam-back-dashboard">
+              Tillbaka till dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
