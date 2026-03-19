@@ -448,8 +448,8 @@ app.post("/api/payment/create-checkout", requireAuth, async (req, res) => {
 
     res.json({ checkoutUrl: session.url });
   } catch (err: any) {
-    console.error("Stripe checkout error:", err.message);
-    res.status(500).json({ message: "Failed to create checkout session" });
+    console.error("Stripe checkout error:", err.type, err.code, err.message);
+    res.status(500).json({ message: err.message || "Failed to create checkout session" });
   }
 });
 
