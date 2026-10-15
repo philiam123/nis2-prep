@@ -281,7 +281,8 @@ class PgStorage {
   // ── Companies ──
   async getCompanies(): Promise<(Company & { userCount: number; certifiedCount: number })[]> {
     const { rows } = await dbPool.query(
-      `SELECT ${COMPANY_COLS.split(", ").map(c => "co." + c).join(", ")},
+      `SELECT co.id, co.name, co.org_number as "orgNumber", co.contact_name as "contactName", co.contact_email as "contactEmail", co.seats,
+        to_char(co.valid_until, 'YYYY-MM-DD') as "validUntil", co.invoice_status as "invoiceStatus", co.notes, co.created_at as "createdAt",
         (SELECT count(*)::int FROM users u WHERE u.company_id = co.id) as "userCount",
         (SELECT count(DISTINCT c.user_id)::int FROM certificates c JOIN users u ON u.id = c.user_id WHERE u.company_id = co.id) as "certifiedCount"
        FROM companies co ORDER BY co.name`
@@ -301,6 +302,40 @@ class PgStorage {
 }
 
 const storage = new PgStorage();
+
+// ── Idempotent, additive schema migration (safe to run on every cold start) ──
+const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS companies (
+  id serial PRIMARY KEY, name text NOT NULL, org_number text, contact_name text, contact_email text,
+  seats integer NOT NULL DEFAULT 0, valid_until date, invoice_status text NOT NULL DEFAULT 'pending',
+  notes text, created_at timestamp NOT NULL DEFAULT now()
+);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at timestamp;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id integer REFERENCES companies(id) ON DELETE SET NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_disabled boolean NOT NULL DEFAULT false;
+ALTER TABLE company_codes ADD COLUMN IF NOT EXISTS company_id integer REFERENCES companies(id) ON DELETE SET NULL;
+CREATE TABLE IF NOT EXISTS exam_sessions (
+  id text PRIMARY KEY, user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE, track integer NOT NULL,
+  questions jsonb NOT NULL, started_at timestamp NOT NULL DEFAULT now(), expires_at timestamp NOT NULL, submitted_at timestamp
+);
+CREATE TABLE IF NOT EXISTS rate_limits (key text PRIMARY KEY, count integer NOT NULL DEFAULT 0, reset_at timestamptz NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_users_company_id ON users(company_id);
+CREATE INDEX IF NOT EXISTS idx_exam_sessions_user ON exam_sessions(user_id);
+`;
+let schemaReady: Promise<void> | null = null;
+function ensureSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = dbPool.query(SCHEMA_SQL).then(() => undefined).catch((err) => {
+      console.error("schema migration error:", err?.message);
+      schemaReady = null;
+    });
+  }
+  return schemaReady;
+}
+app.use(async (_req, _res, next) => {
+  await ensureSchema();
+  next();
+});
 
 // ── Session setup ──
 const sessionSecret = process.env.SESSION_SECRET;
@@ -354,31 +389,49 @@ passport.deserializeUser(async (id: number, done) => {
   }
 });
 
-// ── Basic rate limiting (in-memory, per serverless instance) ──
-const rateBuckets = new Map<string, { count: number; resetAt: number }>();
-function rateLimit(opts: { windowMs: number; max: number; name: string }) {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const now = Date.now();
-    const ip = (req.ip || req.socket.remoteAddress || "unknown").toString();
-    const key = `${opts.name}:${ip}`;
-    let b = rateBuckets.get(key);
-    if (!b || b.resetAt < now) {
-      b = { count: 0, resetAt: now + opts.windowMs };
-      rateBuckets.set(key, b);
-    }
-    b.count++;
-    if (rateBuckets.size > 10000) {
-      rateBuckets.forEach((v, k) => { if (v.resetAt < now) rateBuckets.delete(k); });
-    }
-    if (b.count > opts.max) {
-      res.setHeader("Retry-After", Math.ceil((b.resetAt - now) / 1000).toString());
-      return res.status(429).json({ message: "För många försök. Vänta en stund och försök igen." });
+// ── Basic rate limiting (DB-backed so it works across serverless instances) ──
+function clientIp(req: express.Request): string {
+  const h = (req.headers["x-vercel-forwarded-for"] || req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || "") as string;
+  return (h.split(",")[0] || req.ip || "unknown").trim();
+}
+
+async function hitLimit(key: string, windowSec: number): Promise<{ count: number; retryAfter: number }> {
+  const { rows } = await dbPool.query(
+    `INSERT INTO rate_limits (key, count, reset_at) VALUES ($1, 1, now() + make_interval(secs => $2))
+     ON CONFLICT (key) DO UPDATE SET
+       count = CASE WHEN rate_limits.reset_at < now() THEN 1 ELSE rate_limits.count + 1 END,
+       reset_at = CASE WHEN rate_limits.reset_at < now() THEN EXCLUDED.reset_at ELSE rate_limits.reset_at END
+     RETURNING count, GREATEST(1, EXTRACT(EPOCH FROM (reset_at - now())))::int AS "retryAfter"`,
+    [key, windowSec]
+  );
+  if (Math.random() < 0.01) dbPool.query("DELETE FROM rate_limits WHERE reset_at < now()").catch(() => {});
+  return rows[0];
+}
+
+function rateLimit(opts: { name: string; windowSec: number; maxPerIp: number; maxPerEmail?: number }) {
+  return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    try {
+      const checks: Promise<{ count: number; retryAfter: number; max: number }>[] = [
+        hitLimit(`${opts.name}:ip:${clientIp(req)}`, opts.windowSec).then(r => ({ ...r, max: opts.maxPerIp })),
+      ];
+      const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+      if (opts.maxPerEmail && email) {
+        checks.push(hitLimit(`${opts.name}:email:${email}`, opts.windowSec).then(r => ({ ...r, max: opts.maxPerEmail! })));
+      }
+      const results = await Promise.all(checks);
+      const blocked = results.find(r => r.count > r.max);
+      if (blocked) {
+        res.setHeader("Retry-After", String(blocked.retryAfter));
+        return res.status(429).json({ message: "För många försök. Vänta en stund och försök igen." });
+      }
+    } catch (err: any) {
+      console.error("rate limit error:", err?.message); // fail open; never block logins on limiter errors
     }
     next();
   };
 }
-const loginLimiter = rateLimit({ name: "login", windowMs: 15 * 60 * 1000, max: 10 });
-const registerLimiter = rateLimit({ name: "register", windowMs: 60 * 60 * 1000, max: 10 });
+const loginLimiter = rateLimit({ name: "login", windowSec: 15 * 60, maxPerIp: 10, maxPerEmail: 10 });
+const registerLimiter = rateLimit({ name: "register", windowSec: 60 * 60, maxPerIp: 10 });
 
 // ── Auth middleware ──
 function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -1037,6 +1090,13 @@ app.get("/api/company-codes/validate/:code", async (req, res) => {
   const cc = await storage.getCompanyCodeByCode(req.params.code.toUpperCase());
   if (!cc || !cc.isActive || cc.usedCount >= cc.maxUses) return res.json({ valid: false });
   res.json({ valid: true, companyName: cc.companyName, remaining: cc.maxUses - cc.usedCount });
+});
+
+// Generic JSON error handler (never leak stack traces)
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("unhandled error:", err?.message);
+  if (res.headersSent) return;
+  res.status(err?.status || 500).json({ message: "Serverfel" });
 });
 
 export default app;
