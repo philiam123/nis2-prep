@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { allQuestions, type Question } from "@/data/questions";
 import { domainData } from "@/data/domains";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +15,27 @@ import {
 
 type Screen = "pre-exam" | "question" | "results";
 
+interface Question {
+  index: number;
+  domain: number;
+  subtopic: string;
+  question: string;
+  options: string[];
+}
+
 interface Answer {
   questionIndex: number;
   selectedOption: number;
-  correct: boolean;
+}
+
+interface ExamResult {
+  correct: number;
+  total: number;
+  percent: number;
+  passed: boolean;
+  late: boolean;
+  certificate: any | null;
+  breakdown: { domain: number; correct: number; total: number }[];
 }
 
 interface TrackConfig {
@@ -62,30 +78,6 @@ const TRACK_CONFIGS: Record<number, TrackConfig> = {
   },
 };
 
-/** Shuffle array using Fisher-Yates */
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-/** Create a shuffled version of a question (shuffle answer options, track correct answer) */
-function shuffleQuestion(q: Question): Question & { _originalCorrect: number } {
-  const indices = q.options.map((_, i) => i);
-  const shuffledIndices = shuffleArray(indices);
-  const newOptions = shuffledIndices.map(i => q.options[i]);
-  const newCorrect = shuffledIndices.indexOf(q.correct);
-  return {
-    ...q,
-    options: newOptions,
-    correct: newCorrect,
-    _originalCorrect: q.correct,
-  };
-}
-
 export default function ExamPage() {
   const [, navigate] = useLocation();
 
@@ -98,6 +90,11 @@ export default function ExamPage() {
   const [saved, setSaved] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [answerLocked, setAnswerLocked] = useState(false);
+  const [examId, setExamId] = useState<string | null>(null);
+  const [result, setResult] = useState<ExamResult | null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const [startError, setStartError] = useState("");
+  const submittingRef = useRef(false);
 
   // Anti-cheat: track if exam is active
   const [examActive, setExamActive] = useState(false);
@@ -120,14 +117,6 @@ export default function ExamPage() {
   // Determine if each track is locked (expired cert without renewal permission)
   const track1Locked = track1Elig?.needsRenewal && !track1Elig?.canRenew;
   const track2Locked = track2Elig?.needsRenewal && !track2Elig?.canRenew;
-
-  const saveResultFn = useCallback(async (data: any) => {
-    try {
-      await apiRequest("POST", "/api/quiz-results", data);
-    } catch (err) {
-      console.error("Failed to save exam result", err);
-    }
-  }, []);
 
   // Timer
   useEffect(() => {
@@ -185,33 +174,28 @@ export default function ExamPage() {
     };
   }, [examActive]);
 
-  const startExam = (track: number) => {
-    const config = TRACK_CONFIGS[track];
-    // Pull primary questions
-    const primaryFiltered = allQuestions.filter((q) => config.domains.includes(q.domain));
-    const primaryShuffled = shuffleArray(primaryFiltered);
-    const primaryCount = Math.min(config.questionCount, primaryShuffled.length);
-    let selected = primaryShuffled.slice(0, primaryCount);
-
-    // Pull bonus questions from extra domains (e.g. Ledning gets 5 from Personal)
-    if (config.bonusDomains && config.bonusCount) {
-      const bonusFiltered = allQuestions.filter((q) => config.bonusDomains!.includes(q.domain));
-      const bonusShuffled = shuffleArray(bonusFiltered);
-      const bonusCount = Math.min(config.bonusCount, bonusShuffled.length);
-      selected = [...selected, ...bonusShuffled.slice(0, bonusCount)];
+  const startExam = async (track: number) => {
+    setStartError("");
+    let data: { examId: string; timeSeconds: number; questions: Question[] };
+    try {
+      const res = await apiRequest("POST", "/api/exam/start", { track });
+      data = await res.json();
+    } catch (err: any) {
+      setStartError(err.message || "Kunde inte starta provet");
+      return;
     }
-
-    // Final shuffle so bonus questions aren't all at the end
-    const finalQuestions = shuffleArray(selected).map(q => shuffleQuestion(q));
-
     setSelectedTrack(track);
-    setQuestions(finalQuestions);
+    setExamId(data.examId);
+    setResult(null);
+    setSubmitError("");
+    submittingRef.current = false;
+    setQuestions(data.questions);
     setCurrentIndex(0);
     setSelectedOption(null);
     setAnswers([]);
     setSaved(false);
     setAnswerLocked(false);
-    setTimeRemaining(config.timeSeconds);
+    setTimeRemaining(data.timeSeconds);
     setScreen("question");
     setExamActive(true);
     examActiveRef.current = true;
@@ -231,76 +215,64 @@ export default function ExamPage() {
 
   const handleConfirmAnswer = () => {
     if (selectedOption === null || answerLocked) return;
-    const question = questions[currentIndex];
-    const correct = selectedOption === question.correct;
-    setAnswers((prev) => [...prev, { questionIndex: currentIndex, selectedOption, correct }]);
+    setAnswers((prev) => [...prev, { questionIndex: currentIndex, selectedOption }]);
     setAnswerLocked(true);
     setTimeout(() => {
       advanceToNext();
     }, 300);
   };
 
-  const correctCount = answers.filter((a) => a.correct).length;
-  const scorePercent = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
-  const isPass = scorePercent >= 70;
+  // Submit answers to the server for scoring when the exam ends (finished or timed out)
+  const submitExam = useCallback(async () => {
+    if (!examId || submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitError("");
+    const payload = questions.map((_, idx) => {
+      const a = answers.find((x) => x.questionIndex === idx);
+      return a ? a.selectedOption : null;
+    });
+    try {
+      const res = await apiRequest("POST", "/api/exam/submit", { examId, answers: payload });
+      setResult(await res.json());
+      setSaved(true);
+      queryClient.invalidateQueries({ queryKey: ["/api/certificates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/exam/eligibility"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quiz-results"] });
+    } catch (err: any) {
+      submittingRef.current = false;
+      setSubmitError(err.message || "Kunde inte lämna in provet");
+    }
+  }, [examId, questions, answers]);
+
+  useEffect(() => {
+    if (screen === "results" && !result && !submittingRef.current) {
+      submitExam();
+    }
+  }, [screen, result, submitExam]);
+
+  const correctCount = result?.correct ?? 0;
+  const scorePercent = result?.percent ?? 0;
+  const isPass = !!result?.passed;
 
   const trackConfig = selectedTrack ? TRACK_CONFIGS[selectedTrack] : null;
 
   const domainBreakdown = useMemo(() => {
-    if (!selectedTrack) return [];
-    const config = TRACK_CONFIGS[selectedTrack];
-    // Include both primary and bonus domains in the breakdown
-    const allDomainIds = [...config.domains, ...(config.bonusDomains || [])];
-    return allDomainIds.map(domainId => {
-      const domain = domainData.find(d => d.id === domainId);
+    if (!result) return [];
+    return result.breakdown.map((b) => {
+      const domain = domainData.find((d) => d.id === b.domain);
       if (!domain) return null;
-      const domainAnswers = answers.filter(
-        (a) => questions[a.questionIndex]?.domain === domainId
-      );
-      const total = domainAnswers.length;
-      const correct = domainAnswers.filter((a) => a.correct).length;
       return {
         name: domain.shortTitle,
         shortName: domain.shortTitle,
-        correct,
-        total,
-        percent: total > 0 ? Math.round((correct / total) * 100) : 0,
+        correct: b.correct,
+        total: b.total,
+        percent: b.total > 0 ? Math.round((b.correct / b.total) * 100) : 0,
         color: domain.color,
       };
     }).filter(Boolean) as any[];
-  }, [answers, questions, selectedTrack]);
+  }, [result]);
 
-  const handleSaveResults = async () => {
-    const answersMap: Record<string, number> = {};
-    answers.forEach((a) => {
-      const q = questions[a.questionIndex];
-      if (q) answersMap[q.subtopic] = a.selectedOption;
-    });
-    await saveResultFn({
-      domains: trackConfig ? trackConfig.domains : [],
-      totalQuestions: questions.length,
-      correctAnswers: correctCount,
-      answers: answersMap,
-    });
-    setSaved(true);
-  };
-
-  const handleGetCertificate = async () => {
-    if (!saved) {
-      await handleSaveResults();
-    }
-    try {
-      await apiRequest("POST", "/api/certificates", {
-        examScore: correctCount,
-        totalQuestions: questions.length,
-        track: selectedTrack,
-      });
-      // Invalidate caches so eligibility and cert data update
-      queryClient.invalidateQueries({ queryKey: ["/api/certificates"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/exam/eligibility"] });
-    } catch (err) {
-      console.error("Failed to create certificate", err);
-    }
+  const handleGetCertificate = () => {
     navigate("/certificate");
   };
 
@@ -447,6 +419,8 @@ export default function ExamPage() {
           </CardContent>
         </Card>
 
+        {startError && <p className="text-sm text-destructive">{startError}</p>}
+
         {/* Rules */}
         <Card>
           <CardHeader>
@@ -577,7 +551,22 @@ export default function ExamPage() {
   }
 
   // ── RESULTS SCREEN ──
-  if (screen === "results" && trackConfig) {
+  if (screen === "results" && trackConfig && !result) {
+    return (
+      <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4 text-center">
+        {submitError ? (
+          <>
+            <p className="text-destructive">{submitError}</p>
+            <Button onClick={submitExam}>Försök skicka igen</Button>
+          </>
+        ) : (
+          <p className="text-muted-foreground">Rättar provet…</p>
+        )}
+      </div>
+    );
+  }
+
+  if (screen === "results" && trackConfig && result) {
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold" data-testid="exam-results-title">
@@ -590,7 +579,7 @@ export default function ExamPage() {
               {scorePercent}%
             </div>
             <p className="text-muted-foreground">
-              {correctCount} av {questions.length} rätt
+              {correctCount} av {result.total} rätt
             </p>
             <p className="text-sm mt-1">
               {isPass ? (
@@ -654,12 +643,6 @@ export default function ExamPage() {
             </Button>
           )}
           <div className="flex flex-wrap gap-3">
-            {!saved && (
-              <Button onClick={handleSaveResults} variant="outline" data-testid="exam-save-results">
-                <Save className="mr-2 h-4 w-4" />
-                Spara resultat
-              </Button>
-            )}
             {!isPass && (
               <Button
                 variant="outline"
@@ -670,6 +653,8 @@ export default function ExamPage() {
                   setCurrentIndex(0);
                   setSaved(false);
                   setAnswerLocked(false);
+                  setResult(null);
+                  setExamId(null);
                 }}
                 data-testid="exam-try-again"
               >

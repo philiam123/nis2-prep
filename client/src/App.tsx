@@ -11,8 +11,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import LandingPage from "@/pages/landing";
 import { LoginPage, RegisterPage } from "@/pages/auth";
-import PaymentPage from "@/pages/payment";
-import PaymentSuccessPage from "@/pages/payment-success";
+import NoLicensePage from "@/pages/no-license";
 import DashboardPage from "@/pages/dashboard";
 import StudyPage from "@/pages/study";
 import QuizPage from "@/pages/quiz";
@@ -20,6 +19,7 @@ import ExamPage from "@/pages/exam";
 import CertificatePage from "@/pages/certificate";
 import NotFound from "@/pages/not-found";
 import AdminPage from "@/pages/admin";
+import AdminUserPage from "@/pages/admin-user";
 import VerifyPage from "@/pages/verify";
 import PrivacyPage from "@/pages/privacy";
 import CookiesPage from "@/pages/cookies";
@@ -42,7 +42,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (isLoading) return <LoadingScreen />;
   if (!user) return <Redirect to="/login" />;
-  if (!user.hasPaid) return <Redirect to="/payment" />;
+  if (!user.hasPaid && !user.isAdmin) return <Redirect to="/no-license" />;
 
   return <>{children}</>;
 }
@@ -89,16 +89,13 @@ function AppRouter() {
       <Route path="/" component={LandingPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
-      <Route path="/payment">
+      <Route path="/no-license">
         <AuthGate>
-          <PaymentPage />
+          <NoLicensePage />
         </AuthGate>
       </Route>
-      <Route path="/payment-success">
-        <AuthGate>
-          <PaymentSuccessPage />
-        </AuthGate>
-      </Route>
+      <Route path="/payment"><Redirect to="/no-license" /></Route>
+      <Route path="/payment-success"><Redirect to="/no-license" /></Route>
       <Route path="/dashboard">
         <ProtectedRoute>
           <AuthenticatedLayout>
@@ -140,6 +137,11 @@ function AppRouter() {
             <ProfilePage />
           </AuthenticatedLayout>
         </ProtectedRoute>
+      </Route>
+      <Route path="/admin/users/:id">
+        <AdminRoute>
+          <AdminUserPage />
+        </AdminRoute>
       </Route>
       <Route path="/admin">
         <AdminRoute>

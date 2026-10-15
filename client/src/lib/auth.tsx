@@ -8,7 +8,8 @@ type User = {
   name: string;
   hasPaid: boolean;
   isAdmin: boolean;
-  stripeCustomerId: string | null;
+  companyId?: number | null;
+  lastLoginAt?: string | null;
   createdAt: string | null;
 };
 

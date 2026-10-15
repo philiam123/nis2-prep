@@ -15,7 +15,6 @@ interface VerifyCertificate {
   track: number;
   issuedAt: string;
   userName: string;
-  userEmail: string;
 }
 
 function VerifyResult({ certId }: { certId: string }) {

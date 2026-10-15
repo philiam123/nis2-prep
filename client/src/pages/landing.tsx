@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { QUOTE_MAILTO } from "@/lib/quote";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Users, Clock, Award, AlertTriangle, BookOpen, HelpCircle, CheckCircle, Zap, Lock, FileText, ArrowRight, Building2, Mail } from "lucide-react";
 
@@ -66,10 +67,21 @@ export default function LandingPage() {
             <Button
               size="lg"
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border-0 text-lg px-8 py-6"
-              data-testid="hero-get-started-btn"
+              data-testid="hero-request-quote-btn"
+              asChild
+            >
+              <a href={QUOTE_MAILTO}>
+                Begär offert <ArrowRight className="ml-2 h-5 w-5" />
+              </a>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10 text-lg px-8 py-6"
+              data-testid="hero-company-code-btn"
               onClick={() => navigate("/register")}
             >
-              Starta utbildningen <ArrowRight className="ml-2 h-5 w-5" />
+              Har du en företagskod?
             </Button>
             <Button
               size="lg"
@@ -268,20 +280,20 @@ export default function LandingPage() {
       {/* Pricing */}
       <section className="py-20 px-4 bg-white/[0.02] border-y border-white/10">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-3">Enkel prissättning</h2>
+          <h2 className="text-3xl font-bold mb-3">Företagslicens</h2>
           <p className="text-white/50 mb-12 max-w-xl mx-auto">
-            Individuell licens eller volymrabatt för företag. Certifikat giltigt i 12 månader med möjlighet till förnyelse.
+            Utbildningen säljs till företag och organisationer. Era medarbetare registrerar sig med en gemensam företagskod. Certifikat giltigt i 12 månader med möjlighet till förnyelse.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
             {/* Individ */}
             <Card className="bg-white/[0.03] border-cyan-500/30">
               <CardContent className="pt-8 pb-8">
-                <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4">Individ</div>
-                <div className="text-5xl font-bold mb-1">
-                  <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">1 490 kr</span>
+                <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-4">Ingår för varje deltagare</div>
+                <div className="text-3xl font-bold mb-1">
+                  <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Komplett utbildning</span>
                 </div>
-                <div className="text-white/50 mb-8">Per person. Engångsbetalning.</div>
+                <div className="text-white/50 mb-8">Från 790 kr per deltagare beroende på volym.</div>
                 <ul className="text-left mb-8 space-y-3 max-w-xs mx-auto">
                   {[
                     "11 utbildningsavsnitt",
@@ -300,10 +312,10 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border-0"
-                  data-testid="pricing-get-started-btn"
-                  onClick={() => navigate("/register")}
+                  data-testid="pricing-request-quote-btn"
+                  asChild
                 >
-                  Starta utbildningen
+                  <a href={QUOTE_MAILTO}>Begär offert</a>
                 </Button>
               </CardContent>
             </Card>
@@ -345,6 +357,7 @@ export default function LandingPage() {
                   {[
                     "Gemensam företagskod för registrering",
                     "Samlad faktura",
+                    "CSV-export av resultat och certifikat",
                     "Uppföljning av kursframsteg",
                     "Dedikerad support",
                   ].map((item) => (
@@ -360,9 +373,9 @@ export default function LandingPage() {
                   className="w-full border-white/20 text-white hover:bg-white/10"
                   asChild
                 >
-                  <a href="mailto:philip.nilsson@electrab.se?subject=NIS2%20F%C3%B6retagslicens">
+                  <a href={QUOTE_MAILTO}>
                     <Mail className="mr-2 h-4 w-4" />
-                    Kontakta oss
+                    Begär offert
                   </a>
                 </Button>
               </CardContent>

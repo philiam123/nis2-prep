@@ -67,7 +67,7 @@ Byt ut `DITT-ANVÄNDARNAMN` mot ditt GitHub-användarnamn.
 
 1. Gå till `https://nis2utbildning.com`
 2. Testa registrering och inloggning
-3. Testa admin-login: `admin@nis2.com` / `AigpAdmin2026!`
+3. Testa admin-login med ett adminkonto (inloggningsuppgifter lagras aldrig i repot)
 
 ---
 
@@ -84,12 +84,10 @@ Appen använder just nu **in-memory lagring**. Det betyder:
 - Integrera Stripe för riktiga betalningar — gå till Stripe Dashboard för API-nycklar
 
 ### Admin-konto
-- Email: `admin@nis2.com`
-- Lösenord: `AigpAdmin2026!`
-- Byt lösenordet i `server/storage.ts` (seedAdmin-metoden) innan produktion
+- Adminkonton skapas direkt i databasen med bcrypt-hashat lösenord. Inga lösenord i koden.
 
 ### Session Secret
-- Ändra `SESSION_SECRET` i Vercel Environment Variables till något unikt och säkert
+- `SESSION_SECRET` MÅSTE vara satt i Vercel (Production och Preview) — API:t startar inte utan den
 - Använd t.ex.: `openssl rand -base64 32` för att generera ett slumpmässigt värde
 
 ---

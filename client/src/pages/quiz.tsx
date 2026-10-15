@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { allQuestions, type Question } from "@/data/questions";
 import { domainData } from "@/data/domains";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +15,20 @@ import {
 
 type Screen = "setup" | "question" | "results";
 
+interface Question {
+  id: number;
+  domain: number;
+  subtopic: string;
+  question: string;
+  options: string[];
+}
+
 interface Answer {
   questionIndex: number;
   selectedOption: number;
   correct: boolean;
+  correctOption: number;
+  explanation: string;
 }
 
 export default function QuizPage() {
@@ -52,11 +61,19 @@ export default function QuizPage() {
     );
   };
 
-  const startQuiz = () => {
-    const filtered = allQuestions.filter((q) => selectedDomains.includes(q.domain));
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-    const count = Math.min(practiceCount, shuffled.length);
-    const selected = shuffled.slice(0, count);
+  const [loadError, setLoadError] = useState("");
+  const [checking, setChecking] = useState(false);
+
+  const startQuiz = async () => {
+    setLoadError("");
+    let selected: Question[] = [];
+    try {
+      const res = await apiRequest("GET", `/api/questions/practice?domains=${selectedDomains.join(",")}&count=${practiceCount}`);
+      selected = await res.json();
+    } catch (err: any) {
+      setLoadError(err.message || "Kunde inte hämta frågor");
+      return;
+    }
 
     setQuestions(selected);
     setCurrentIndex(0);
@@ -67,20 +84,23 @@ export default function QuizPage() {
     setScreen("question");
   };
 
-  const handleCheckAnswer = () => {
-    if (selectedOption === null) return;
+  const handleCheckAnswer = async () => {
+    if (selectedOption === null || checking) return;
     const question = questions[currentIndex];
-    const correct = selectedOption === question.correct;
-    setAnswers((prev) => [...prev, { questionIndex: currentIndex, selectedOption, correct }]);
-    setShowExplanation(true);
+    setChecking(true);
+    try {
+      const res = await apiRequest("POST", `/api/questions/${question.id}/check`, { option: selectedOption });
+      const fb: { correct: boolean; correctOption: number; explanation: string } = await res.json();
+      setAnswers((prev) => [...prev, { questionIndex: currentIndex, selectedOption, ...fb }]);
+      setShowExplanation(true);
+    } catch (err: any) {
+      setLoadError(err.message || "Kunde inte kontrollera svaret");
+    } finally {
+      setChecking(false);
+    }
   };
 
   const goToNext = useCallback(() => {
-    if (selectedOption !== null && !answers.find((a) => a.questionIndex === currentIndex)) {
-      const question = questions[currentIndex];
-      const correct = selectedOption === question.correct;
-      setAnswers((prev) => [...prev, { questionIndex: currentIndex, selectedOption, correct }]);
-    }
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
@@ -88,7 +108,7 @@ export default function QuizPage() {
     } else {
       setScreen("results");
     }
-  }, [currentIndex, questions, selectedOption, answers]);
+  }, [currentIndex, questions]);
 
   const correctCount = answers.filter((a) => a.correct).length;
   const scorePercent = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
@@ -116,16 +136,10 @@ export default function QuizPage() {
   const weakAreas = domainBreakdown.filter((d) => d.percent < 70 && d.total > 0);
 
   const handleSaveResults = async () => {
-    const answersMap: Record<string, number> = {};
-    answers.forEach((a) => {
-      const q = questions[a.questionIndex];
-      if (q) answersMap[q.subtopic] = a.selectedOption;
-    });
+    if (answers.length === 0) return;
     await saveResultFn({
       domains: selectedDomains,
-      totalQuestions: questions.length,
-      correctAnswers: correctCount,
-      answers: answersMap,
+      answers: answers.map((a) => ({ id: questions[a.questionIndex].id, option: a.selectedOption })),
     });
     setSaved(true);
   };
@@ -186,6 +200,7 @@ export default function QuizPage() {
         >
           Starta quiz
         </Button>
+        {loadError && <p className="text-sm text-destructive">{loadError}</p>}
       </div>
     );
   }
@@ -226,7 +241,7 @@ export default function QuizPage() {
               {question.options.map((option, idx) => {
                 let optionClass = "";
                 if (answered || showExplanation) {
-                  if (idx === question.correct) {
+                  if (idx === answered?.correctOption) {
                     optionClass = "border-green-500 bg-green-500/10";
                   } else if (idx === answered?.selectedOption && !answered?.correct) {
                     optionClass = "border-destructive bg-destructive/10";
@@ -247,12 +262,12 @@ export default function QuizPage() {
                     <Label htmlFor={`option-${idx}`} className={`text-sm leading-relaxed flex-1 ${isLocked ? "cursor-not-allowed" : "cursor-pointer"}`}>
                       {option}
                     </Label>
-                    {(answered || showExplanation) && idx === question.correct && (
+                    {answered && idx === answered.correctOption && (
                       <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
                     )}
                     {(answered || showExplanation) &&
                       idx === (answered?.selectedOption ?? selectedOption) &&
-                      idx !== question.correct && (
+                      idx !== answered?.correctOption && (
                         <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                       )}
                   </div>
@@ -263,7 +278,7 @@ export default function QuizPage() {
             {showExplanation && (
               <div className="mt-4 p-3 bg-muted rounded-md" data-testid="quiz-explanation">
                 <p className="text-sm font-medium mb-1">Förklaring</p>
-                <p className="text-sm text-muted-foreground">{question.explanation}</p>
+                <p className="text-sm text-muted-foreground">{answered?.explanation}</p>
               </div>
             )}
           </CardContent>
@@ -274,7 +289,7 @@ export default function QuizPage() {
             {!showExplanation && (
               <Button
                 onClick={handleCheckAnswer}
-                disabled={selectedOption === null}
+                disabled={selectedOption === null || checking}
                 data-testid="quiz-check-answer"
               >
                 Kontrollera svar

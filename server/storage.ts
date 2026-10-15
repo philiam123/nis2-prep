@@ -38,7 +38,8 @@ export class MemStorage implements IStorage {
   }
 
   private seedAdmin() {
-    const adminPassword = this.hashPassword("Nis2Admin2026!");
+    // Dead code (server/ is not deployed). No hardcoded admin credentials.
+    const adminPassword = this.hashPassword(process.env.DEV_ADMIN_PASSWORD || require("crypto").randomUUID());
     const admin: User = {
       id: this.nextUserId++,
       email: "admin@nis2.com",

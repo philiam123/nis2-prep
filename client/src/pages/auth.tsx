@@ -26,7 +26,7 @@ function LoginPage() {
       } else if (user.hasPaid) {
         navigate("/dashboard");
       } else {
-        navigate("/payment");
+        navigate("/no-license");
       }
     } catch (err: any) {
       setError(err.message || "Inloggning misslyckades");
@@ -141,7 +141,7 @@ function RegisterPage() {
       if (user.hasPaid) {
         navigate("/dashboard");
       } else {
-        navigate("/payment");
+        navigate("/no-license");
       }
     } catch (err: any) {
       setError(err.message || "Registrering misslyckades");
@@ -193,11 +193,11 @@ function RegisterPage() {
                 <Input
                   id="register-password"
                   type="password"
-                  placeholder="Minst 6 tecken"
+                  placeholder="Minst 8 tecken"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   data-testid="register-password"
                 />
               </div>

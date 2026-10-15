@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -15,8 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, DollarSign, BookOpen, HelpCircle, ArrowLeft,
   CheckCircle, XCircle, Shield, TrendingUp, Plus, Building2,
-  Trash2, Loader2, Copy, Check, RefreshCw
+  Trash2, Loader2, Copy, Check, RefreshCw, Award, Download, Search
 } from "lucide-react";
+import { CompaniesPanel, CertificatesPanel, type Company } from "@/components/admin-companies";
 
 type AdminUser = {
   id: number;
@@ -25,7 +26,15 @@ type AdminUser = {
   hasPaid: boolean;
   isAdmin: boolean;
   companyCode: string | null;
+  companyId: number | null;
+  companyName: string | null;
   canRenew: boolean;
+  isDisabled: boolean;
+  lastLoginAt: string | null;
+  certificateCount: number;
+  quizCount: number;
+  chaptersCompleted: number;
+  bestScore: number | null;
   createdAt: string | null;
 };
 
@@ -36,12 +45,16 @@ type AdminStats = {
   totalQuizzes: number;
   avgScore: number;
   totalChaptersCompleted: number;
+  totalCompanies: number;
+  totalCertificates: number;
+  activeLast30Days: number;
 };
 
 type CompanyCode = {
   id: number;
   code: string;
   companyName: string;
+  companyId: number | null;
   maxUses: number;
   usedCount: number;
   pricePerUser: number;
@@ -65,6 +78,12 @@ export default function AdminPage() {
   const { data: companyCodes = [], isLoading: codesLoading } = useQuery<CompanyCode[]>({
     queryKey: ["/api/admin/company-codes"],
   });
+
+  const { data: companies = [] } = useQuery<Company[]>({
+    queryKey: ["/api/admin/companies"],
+  });
+  const [tab, setTab] = useState("users");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
 
   const loading = usersLoading || statsLoading || codesLoading;
 
@@ -134,7 +153,7 @@ export default function AdminPage() {
                 <DollarSign className="h-8 w-8 text-emerald-600" />
                 <div>
                   <p className="text-2xl font-bold">{stats?.paidUsers ?? 0}</p>
-                  <p className="text-sm text-muted-foreground">Betalande</p>
+                  <p className="text-sm text-muted-foreground">Med licens</p>
                 </div>
               </div>
             </CardContent>
@@ -143,10 +162,10 @@ export default function AdminPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <TrendingUp className="h-8 w-8 text-blue-600" />
+                <Building2 className="h-8 w-8 text-blue-600" />
                 <div>
-                  <p className="text-2xl font-bold">{stats?.totalRevenue ?? 0} kr</p>
-                  <p className="text-sm text-muted-foreground">Intäkter</p>
+                  <p className="text-2xl font-bold">{stats?.totalCompanies ?? 0}</p>
+                  <p className="text-sm text-muted-foreground">Företag</p>
                 </div>
               </div>
             </CardContent>
@@ -166,7 +185,29 @@ export default function AdminPage() {
         </div>
 
         {/* Additional stats row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Award className="h-8 w-8 text-amber-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.totalCertificates ?? 0}</p>
+                  <p className="text-sm text-muted-foreground">Utfärdade diplom</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Users className="h-8 w-8 text-cyan-600" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.activeLast30Days ?? 0}</p>
+                  <p className="text-sm text-muted-foreground">Aktiva senaste 30 d</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -192,11 +233,19 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs: Users / Company Codes */}
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               Användare
+            </TabsTrigger>
+            <TabsTrigger value="companies" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Företag
+            </TabsTrigger>
+            <TabsTrigger value="certificates" className="gap-2">
+              <Award className="h-4 w-4" />
+              Diplom
             </TabsTrigger>
             <TabsTrigger value="company-codes" className="gap-2">
               <Building2 className="h-4 w-4" />
@@ -206,7 +255,18 @@ export default function AdminPage() {
 
           <TabsContent value="users" className="space-y-6">
             <CreateUserForm />
-            <UsersTable users={nonAdminUsers} />
+            <UsersTable users={nonAdminUsers} companies={companies} companyFilter={companyFilter} setCompanyFilter={setCompanyFilter} />
+          </TabsContent>
+
+          <TabsContent value="companies" className="space-y-6">
+            <CompaniesPanel
+              companies={companies}
+              onShowUsers={(id) => { setCompanyFilter(String(id)); setTab("users"); }}
+            />
+          </TabsContent>
+
+          <TabsContent value="certificates" className="space-y-6">
+            <CertificatesPanel companies={companies} />
           </TabsContent>
 
           <TabsContent value="company-codes" className="space-y-6">
@@ -333,8 +393,38 @@ function CreateUserForm() {
 }
 
 /* ── Users Table ── */
-function UsersTable({ users }: { users: AdminUser[] }) {
+function UsersTable({ users, companies, companyFilter, setCompanyFilter }: {
+  users: AdminUser[];
+  companies: Company[];
+  companyFilter: string;
+  setCompanyFilter: (v: string) => void;
+}) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+  const [search, setSearch] = useState("");
+  const [licenseFilter, setLicenseFilter] = useState("all");
+  const [certFilter, setCertFilter] = useState("all");
+  const [activityFilter, setActivityFilter] = useState("all");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    return users.filter((u) => {
+      if (q && ![u.name, u.email, u.companyCode, u.companyName].some((v) => v?.toLowerCase().includes(q))) return false;
+      if (companyFilter === "none" && u.companyId) return false;
+      if (companyFilter !== "all" && companyFilter !== "none" && String(u.companyId) !== companyFilter) return false;
+      if (licenseFilter === "yes" && !u.hasPaid) return false;
+      if (licenseFilter === "no" && u.hasPaid) return false;
+      if (certFilter === "yes" && !u.certificateCount) return false;
+      if (certFilter === "no" && u.certificateCount) return false;
+      const last = u.lastLoginAt ? new Date(u.lastLoginAt).getTime() : 0;
+      if (activityFilter === "30d" && (!last || now - last > 30 * 864e5)) return false;
+      if (activityFilter === "inactive" && last && now - last <= 30 * 864e5) return false;
+      if (activityFilter === "never" && last) return false;
+      return true;
+    });
+  }, [users, search, companyFilter, licenseFilter, certFilter, activityFilter]);
+  const selectClass = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
   const togglePayment = useMutation({
     mutationFn: async ({ id, hasPaid }: { id: number; hasPaid: boolean }) => {
@@ -343,7 +433,7 @@ function UsersTable({ users }: { users: AdminUser[] }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Betalningsstatus uppdaterad" });
+      toast({ title: "Licensstatus uppdaterad" });
     },
     onError: (err: Error) => {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
@@ -368,11 +458,38 @@ function UsersTable({ users }: { users: AdminUser[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Registrerade användare ({users.length})
+          Registrerade användare ({filtered.length}{filtered.length !== users.length ? ` av ${users.length}` : ""})
         </CardTitle>
+        <div className="flex flex-wrap gap-2 pt-2">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input className="pl-8" placeholder="Sök namn, e-post, företag, kod…" value={search} onChange={(e) => setSearch(e.target.value)} data-testid="admin-user-search" />
+          </div>
+          <select className={selectClass} value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} data-testid="filter-company">
+            <option value="all">Alla företag</option>
+            <option value="none">Inget företag</option>
+            {companies.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+          </select>
+          <select className={selectClass} value={licenseFilter} onChange={(e) => setLicenseFilter(e.target.value)}>
+            <option value="all">Licens: alla</option>
+            <option value="yes">Har licens</option>
+            <option value="no">Saknar licens</option>
+          </select>
+          <select className={selectClass} value={certFilter} onChange={(e) => setCertFilter(e.target.value)}>
+            <option value="all">Diplom: alla</option>
+            <option value="yes">Har diplom</option>
+            <option value="no">Inget diplom</option>
+          </select>
+          <select className={selectClass} value={activityFilter} onChange={(e) => setActivityFilter(e.target.value)}>
+            <option value="all">Aktivitet: alla</option>
+            <option value="30d">Inloggad senaste 30 d</option>
+            <option value="inactive">Inaktiv &gt; 30 d</option>
+            <option value="never">Aldrig inloggad (sedan spårning)</option>
+          </select>
+        </div>
       </CardHeader>
       <CardContent>
-        {users.length === 0 ? (
+        {filtered.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
             Inga användare registrerade ännu.
           </p>
@@ -384,26 +501,34 @@ function UsersTable({ users }: { users: AdminUser[] }) {
                   <th className="pb-3 font-medium text-muted-foreground">ID</th>
                   <th className="pb-3 font-medium text-muted-foreground">Namn</th>
                   <th className="pb-3 font-medium text-muted-foreground">E-post</th>
-                  <th className="pb-3 font-medium text-muted-foreground">Företagskod</th>
-                  <th className="pb-3 font-medium text-muted-foreground">Betalning</th>
+                  <th className="pb-3 font-medium text-muted-foreground">Företag</th>
+                  <th className="pb-3 font-medium text-muted-foreground">Licens</th>
+                  <th className="pb-3 font-medium text-muted-foreground">Bästa</th>
+                  <th className="pb-3 font-medium text-muted-foreground">Diplom</th>
                   <th className="pb-3 font-medium text-muted-foreground">Förnyelse</th>
+                  <th className="pb-3 font-medium text-muted-foreground">Senast inloggad</th>
                   <th className="pb-3 font-medium text-muted-foreground">Registrerad</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
-                  <tr key={u.id} className="border-b last:border-0">
+                {filtered.map(u => (
+                  <tr key={u.id} className={`border-b last:border-0 ${u.isDisabled ? "opacity-50" : ""}`}>
                     <td className="py-3 text-muted-foreground">#{u.id}</td>
-                    <td className="py-3 font-medium">{u.name}</td>
+                    <td className="py-3 font-medium">
+                      <button className="text-primary hover:underline text-left" onClick={() => navigate(`/admin/users/${u.id}`)} data-testid={`admin-user-link-${u.id}`}>
+                        {u.name}
+                      </button>
+                    </td>
                     <td className="py-3">{u.email}</td>
                     <td className="py-3">
+                      {u.companyName ? <div>{u.companyName}</div> : null}
                       {u.companyCode ? (
                         <Badge variant="outline" className="font-mono text-xs">
                           {u.companyCode}
                         </Badge>
-                      ) : (
+                      ) : !u.companyName ? (
                         <span className="text-muted-foreground">—</span>
-                      )}
+                      ) : null}
                     </td>
                     <td className="py-3">
                       <button
@@ -415,16 +540,18 @@ function UsersTable({ users }: { users: AdminUser[] }) {
                         {u.hasPaid ? (
                           <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700">
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            Betald
+                            Licens
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="hover:bg-destructive/20">
                             <XCircle className="h-3 w-3 mr-1" />
-                            Obetald
+                            Ingen
                           </Badge>
                         )}
                       </button>
                     </td>
+                    <td className="py-3">{u.bestScore != null ? `${u.bestScore}%` : "—"}</td>
+                    <td className="py-3">{u.certificateCount > 0 ? <Badge variant="outline"><Award className="h-3 w-3 mr-1" />{u.certificateCount}</Badge> : "—"}</td>
                     <td className="py-3">
                       <button
                         className="cursor-pointer"
@@ -444,6 +571,9 @@ function UsersTable({ users }: { users: AdminUser[] }) {
                           </Badge>
                         )}
                       </button>
+                    </td>
+                    <td className="py-3 text-muted-foreground whitespace-nowrap">
+                      {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" }) : "—"}
                     </td>
                     <td className="py-3 text-muted-foreground">
                       {u.createdAt
@@ -469,6 +599,8 @@ function CreateCompanyCodeForm() {
   const [companyName, setCompanyName] = useState("");
   const [maxUses, setMaxUses] = useState("50");
   const [pricePerUser, setPricePerUser] = useState("1190");
+  const [companyId, setCompanyId] = useState("");
+  const { data: companies = [] } = useQuery<Company[]>({ queryKey: ["/api/admin/companies"] });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -477,6 +609,7 @@ function CreateCompanyCodeForm() {
         companyName,
         maxUses: parseInt(maxUses) || 50,
         pricePerUser: (parseInt(pricePerUser) || 1190) * 100, // convert to öre
+        companyId: companyId ? parseInt(companyId) : null,
       });
       return res.json();
     },
@@ -534,9 +667,25 @@ function CreateCompanyCodeForm() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Företag AB"
-              required
+              required={!companyId}
               data-testid="cc-company"
             />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="cc-companyid">Koppla till företag (licens/platser)</Label>
+            <select
+              id="cc-companyid"
+              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+              value={companyId}
+              onChange={(e) => {
+                setCompanyId(e.target.value);
+                const c = companies.find((x) => String(x.id) === e.target.value);
+                if (c && !companyName) setCompanyName(c.name);
+              }}
+            >
+              <option value="">— Inget företag —</option>
+              {companies.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="cc-max">Max antal användare</Label>

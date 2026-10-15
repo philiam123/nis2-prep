@@ -3,13 +3,13 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { domainData } from "@/data/domains";
-import { allQuestions } from "@/data/questions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, HelpCircle, ArrowRight, Target, Award, GraduationCap, Shield, Users } from "lucide-react";
 
 export default function DashboardPage() {
+  const { data: questionCount } = useQuery<{ total: number }>({ queryKey: ["/api/questions/count"] });
   const { user } = useAuth();
   const [, navigate] = useLocation();
 
@@ -305,7 +305,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card>
           <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-bold text-primary">{allQuestions.length}</p>
+            <p className="text-2xl font-bold text-primary">{questionCount?.total ?? "100+"}</p>
             <p className="text-xs text-muted-foreground">Quizfrågor</p>
           </CardContent>
         </Card>
