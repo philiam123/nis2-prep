@@ -338,6 +338,7 @@ export default function LandingPage() {
                 {/* Volume tiers */}
                 <div className="space-y-3 mb-8">
                   {[
+                    { range: "1–4 licenser", price: "1 490 kr", discount: "" },
                     { range: "5–19 licenser", price: "1 190 kr", discount: "~20% rabatt" },
                     { range: "20–49 licenser", price: "990 kr", discount: "~33% rabatt" },
                     { range: "50–99 licenser", price: "790 kr", discount: "~47% rabatt" },
@@ -347,7 +348,7 @@ export default function LandingPage() {
                       <span className="text-white/70">{tier.range}</span>
                       <div className="text-right">
                         <span className="font-semibold text-white">{tier.price}</span>
-                        <span className="text-cyan-400 text-xs ml-2">{tier.discount}</span>
+                        {tier.discount && <span className="text-cyan-400 text-xs ml-2">{tier.discount}</span>}
                       </div>
                     </div>
                   ))}
